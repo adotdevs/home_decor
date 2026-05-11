@@ -23,7 +23,7 @@ export function HomeExperience({
   const forMasonry = latest.slice(4, 20).length ? latest.slice(4, 20) : latest;
 
   return (
-    <div className="bg-[radial-gradient(ellipse_at_top,oklch(0.97_0.02_85),transparent_55%),radial-gradient(ellipse_at_bottom_right,oklch(0.96_0.03_75),transparent_50%)]">
+    <div className="min-w-0 overflow-x-clip bg-[radial-gradient(ellipse_at_top,oklch(0.97_0.02_85),transparent_55%),radial-gradient(ellipse_at_bottom_right,oklch(0.96_0.03_75),transparent_50%)]">
       <HeroSection />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-5 md:px-8">

@@ -9,9 +9,12 @@ export function InspirationSidebar() {
       <p className="mb-3 pl-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground lg:hidden">
         Swipe — newsletter · partners · seasons
       </p>
-      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-col lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0">
+      <div
+        className="no-scrollbar flex min-w-0 w-full max-w-full snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-1 lg:flex-col lg:gap-6 lg:overflow-visible lg:pb-0"
+        style={{ scrollPaddingInline: "1rem" }}
+      >
         <MotionSurface
-          className="min-w-[min(88vw,20rem)] shrink-0 snap-center rounded-3xl border border-black/5 bg-card/90 p-5 shadow-sm backdrop-blur-sm sm:min-w-[min(82vw,22rem)] lg:min-w-0 lg:shrink lg:snap-none"
+          className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center rounded-3xl border border-black/5 bg-card/90 p-5 shadow-sm backdrop-blur-sm sm:w-[min(22rem,calc(100vw-3rem))] lg:w-full lg:min-w-0 lg:shrink lg:snap-none"
           delay={0}
         >
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Newsletter</p>
@@ -26,7 +29,7 @@ export function InspirationSidebar() {
         </MotionSurface>
 
         <MotionSurface
-          className="min-w-[min(88vw,20rem)] shrink-0 snap-center lg:min-w-0 lg:shrink lg:snap-none"
+          className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center sm:w-[min(22rem,calc(100vw-3rem))] lg:w-full lg:min-w-0 lg:shrink lg:snap-none"
           delay={0.06}
           hoverLift={false}
         >
@@ -36,7 +39,7 @@ export function InspirationSidebar() {
         </MotionSurface>
 
         <MotionSurface
-          className="min-w-[min(88vw,20rem)] shrink-0 snap-center rounded-3xl border border-black/5 bg-muted/40 p-5 backdrop-blur-sm sm:min-w-[min(82vw,22rem)] lg:min-w-0 lg:shrink lg:snap-none"
+          className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center rounded-3xl border border-black/5 bg-muted/40 p-5 backdrop-blur-sm sm:w-[min(22rem,calc(100vw-3rem))] lg:w-full lg:min-w-0 lg:shrink lg:snap-none"
           delay={0.12}
           hoverShadow="0 18px 36px -20px rgba(0,0,0,0.2)"
         >

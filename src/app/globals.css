@@ -58,12 +58,14 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "kern" 1, "liga" 1;
     @apply text-[15px] leading-relaxed tracking-wide md:text-base;
+    overflow-x: clip;
   }
 
   .font-heading {
@@ -87,5 +89,10 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* iOS home indicator clearance inside fixed panels */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 }

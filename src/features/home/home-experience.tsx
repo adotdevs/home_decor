@@ -6,29 +6,30 @@ import { FadeIn } from "@/components/common/fade-in";
 import { categoryHeroImage, images } from "@/config/images";
 import { categoryTree } from "@/config/site";
 import { FeaturedRail } from "@/features/home/featured-rail";
-import { HeroSection } from "@/features/home/hero-section";
+import { HeroCarousel } from "@/features/home/hero-carousel";
+import { AutoMoodRail } from "@/features/home/auto-mood-rail";
+import { ExploreTopicGrid } from "@/features/home/explore-topic-grid";
+import { ShopTheLookRow } from "@/features/home/shop-the-look-row";
+import { HomeFeedLoader } from "@/features/home/home-feed-loader";
 import { InspirationSidebar } from "@/features/home/inspiration-sidebar";
-import { MasonryFeed } from "@/features/home/masonry-feed";
 import { toSlug } from "@/lib/utils/content";
 
 export function HomeExperience({
   latest,
   trending,
+  moodArticles,
 }: {
   latest: Array<Record<string, unknown>>;
   trending: Array<Record<string, unknown>>;
+  moodArticles: Array<Record<string, unknown>>;
 }) {
   const lead = latest[0];
   const spotlight = trending.slice(0, 8);
-  const forMasonry = latest.slice(4, 20).length ? latest.slice(4, 20) : latest;
+  const forMasonry = latest.slice(4, 16).length ? latest.slice(4, 16) : latest.slice(0, 12);
 
   return (
     <div className="min-w-0 overflow-x-clip bg-[radial-gradient(ellipse_at_top,oklch(0.97_0.02_85),transparent_55%),radial-gradient(ellipse_at_bottom_right,oklch(0.96_0.03_75),transparent_50%)]">
-      <HeroSection />
-
-      <div className="mx-auto max-w-7xl px-4 sm:px-5 md:px-8">
-        <AdSlot placement="header" />
-      </div>
+      <HeroCarousel />
 
       {lead ? (
         <section className="mx-auto mt-8 grid max-w-7xl gap-8 px-4 sm:px-5 md:grid-cols-2 md:items-center md:px-8 lg:gap-14">
@@ -70,6 +71,18 @@ export function HomeExperience({
         </div>
       </section>
 
+      <div className="mt-16 md:mt-20">
+        <AutoMoodRail
+          title="Editor’s mood — calm & tactile"
+          dek="Rotating hero stories tuned for layered neutrals, quiet luxury, and Pinterest saves."
+          articles={moodArticles.length ? moodArticles : latest.slice(0, 6)}
+        />
+      </div>
+
+      <div className="mt-16 md:mt-24">
+        <ExploreTopicGrid />
+      </div>
+
       <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-5 md:mt-20 md:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -85,11 +98,32 @@ export function HomeExperience({
 
         <div className="mt-8 grid gap-10 lg:grid-cols-4 lg:items-start lg:gap-8">
           <InspirationSidebar />
-          <div className="order-2 lg:order-1 lg:col-span-3">
-            <MasonryFeed articles={forMasonry} />
+          <div className="order-2 min-w-0 lg:order-1 lg:col-span-3">
+            <HomeFeedLoader initial={forMasonry} />
           </div>
         </div>
       </section>
+
+      <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-5 md:mt-20 md:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-3xl font-semibold">Most pinned this week</h2>
+            <p className="mt-2 max-w-xl text-muted-foreground">High-traffic ideas readers return to — great starting points for boards and shopping lists.</p>
+          </div>
+          <Link href="/trending" className="text-sm font-semibold text-primary hover:underline">
+            Trending index
+          </Link>
+        </div>
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {trending.slice(0, 8).map((a) => (
+            <ArticleCard key={String(a.slug)} article={a as never} />
+          ))}
+        </div>
+      </section>
+
+      <div className="mt-16 md:mt-24">
+        <ShopTheLookRow />
+      </div>
 
       <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-5 md:mt-20 md:px-8">
         <h2 className="font-heading text-3xl font-semibold">Shop the rooms — by category</h2>

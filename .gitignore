@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# local media uploads (paths stored in DB)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*

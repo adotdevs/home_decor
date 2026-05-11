@@ -8,6 +8,7 @@
     "start": "next start -p 3001",
     "lint": "eslint",
     "seed": "tsx src/scripts/seed.ts",
+    "ensure-indexes": "tsx src/scripts/ensure-indexes.ts",
     "download-images": "node scripts/download-unsplash-images.mjs"
   },
   "dependencies": {

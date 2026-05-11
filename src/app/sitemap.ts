@@ -5,6 +5,7 @@ import { connectDb } from "@/lib/db";
 import { Article } from "@/models/Article";
 import { categoryTree, seasonalInspiration } from "@/config/site";
 import { allSeedTags, tagToPathSlug, seedArticles } from "@/data/seed-content";
+import { topicHubs } from "@/config/curations";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -42,6 +43,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ]);
 
+  const topicUrls = topicHubs.map((t) => ({
+    url: absoluteUrl(`/topics/${t.slug}`),
+    lastModified: now,
+  }));
+
   let articleUrls: MetadataRoute.Sitemap = [];
   try {
     await connectDb();
@@ -57,5 +63,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   }
 
-  return [...core, ...seasonal, ...tagUrls, ...categoryUrls, ...articleUrls];
+  return [...core, ...seasonal, ...tagUrls, ...categoryUrls, ...topicUrls, ...articleUrls];
 }

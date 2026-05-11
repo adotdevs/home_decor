@@ -34,7 +34,7 @@ export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   };
 }
 
-export function faqSchema(faq: Array<{ question: string; answer: string }>) {
+export function faqSchema(faq: ReadonlyArray<{ readonly question: string; readonly answer: string }>) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",

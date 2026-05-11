@@ -114,7 +114,7 @@ export function SearchCommand() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: reduce ? 0.01 : 0.2, ease }}
-              className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-[2px]"
+              className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-[2px]"
               aria-label="Close search"
               onClick={() => setOpen(false)}
             />
@@ -126,7 +126,7 @@ export function SearchCommand() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: reduce ? 0 : 12 }}
               transition={{ duration: reduce ? 0.01 : 0.32, ease }}
-              className="fixed left-2 right-2 top-[8vh] z-[100] mx-auto max-h-[85vh] max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl md:left-1/2 md:w-full md:-translate-x-1/2"
+              className="fixed left-2 right-2 top-[8vh] z-[260] mx-auto max-h-[85vh] max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl md:left-1/2 md:w-full md:-translate-x-1/2"
             >
               <div className="flex min-w-0 items-center gap-2 border-b border-border px-3 py-2" onKeyDown={onKeyDown}>
                 <Search className="h-5 w-5 shrink-0 text-muted-foreground" />

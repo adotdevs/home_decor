@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,9 +30,14 @@ function isActivePath(pathname: string, href: string) {
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const reduce = useReducedMotion();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -101,8 +107,8 @@ export function SiteHeader() {
     );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/5 bg-background/95 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-14 max-w-7xl min-w-0 items-center justify-between gap-3 px-4 sm:h-16 sm:px-5 md:px-8">
+    <header className="sticky top-0 z-[200] border-b border-black/5 bg-background/95 shadow-sm">
+      <div className="relative z-[210] mx-auto flex h-14 max-w-7xl min-w-0 items-center justify-between gap-3 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:h-16 sm:px-5 md:px-8">
         <Link href="/" className="relative flex min-w-0 shrink-0 items-center">
           <Image
             src="/logo.svg"
@@ -188,117 +194,124 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {open ? (
-          <>
-            <motion.button
-              type="button"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: reduce ? 0.01 : 0.28, ease: panelEase }}
-              className="fixed inset-x-0 bottom-0 top-14 z-40 bg-black/45 backdrop-blur-[2px] md:hidden"
-              aria-label="Close menu"
-              onClick={close}
-            />
-            <motion.nav
-              ref={panelRef}
-              id="mobile-nav"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Mobile navigation"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{
-                type: "tween",
-                duration: reduce ? 0.01 : 0.4,
-                ease: panelEase,
-              }}
-              className="fixed bottom-0 right-0 top-14 z-[48] flex w-[min(100%,22rem)] flex-col border-l border-border bg-background shadow-[-12px_0_48px_rgba(0,0,0,0.12)] md:hidden"
-            >
-              <div className="flex items-center justify-between border-b border-border px-5 py-4">
-                <span className="font-heading text-lg font-semibold tracking-tight">Browse</span>
-                <button
-                  type="button"
-                  className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  aria-label="Close menu"
-                  onClick={close}
-                >
-                  <X className="h-5 w-5" strokeWidth={1.75} />
-                </button>
-              </div>
-              <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 pb-safe">
-                {nav.map(([label, href], i) => (
-                  <motion.div
-                    key={href}
-                    initial={reduce ? false : { opacity: 0, x: 12 }}
-                    animate={{ opacity: 1, x: 0 }}
+      {mounted
+        ? createPortal(
+            <AnimatePresence>
+              {open ? (
+                <>
+                  <motion.button
+                    type="button"
+                    key="mobile-nav-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: reduce ? 0.01 : 0.28, ease: panelEase }}
+                    className="fixed inset-x-0 bottom-0 top-14 z-[160] bg-black/45 backdrop-blur-[2px] sm:top-16 md:hidden"
+                    aria-label="Close menu"
+                    onClick={close}
+                  />
+                  <motion.nav
+                    ref={panelRef}
+                    key="mobile-nav-panel"
+                    id="mobile-nav"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Mobile navigation"
+                    initial={{ x: "100%" }}
+                    animate={{ x: 0 }}
+                    exit={{ x: "100%" }}
                     transition={{
-                      delay: reduce ? 0 : 0.05 + i * 0.035,
-                      duration: 0.38,
+                      type: "tween",
+                      duration: reduce ? 0.01 : 0.4,
                       ease: panelEase,
                     }}
+                    className="fixed bottom-0 right-0 top-14 z-[170] flex w-[min(100%,22rem)] flex-col border-l border-border bg-background shadow-[-12px_0_48px_rgba(0,0,0,0.12)] sm:top-16 md:hidden"
                   >
-                    <Link href={href} className={linkMobile(href)} onClick={close}>
-                      {label}
-                    </Link>
-                  </motion.div>
-                ))}
+                    <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                      <span className="font-heading text-lg font-semibold tracking-tight">Browse</span>
+                      <button
+                        type="button"
+                        className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        aria-label="Close menu"
+                        onClick={close}
+                      >
+                        <X className="h-5 w-5" strokeWidth={1.75} />
+                      </button>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 pb-safe">
+                      {nav.map(([label, href], i) => (
+                        <motion.div
+                          key={href}
+                          initial={reduce ? false : { opacity: 0, x: 12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{
+                            delay: reduce ? 0 : 0.05 + i * 0.035,
+                            duration: 0.38,
+                            ease: panelEase,
+                          }}
+                        >
+                          <Link href={href} className={linkMobile(href)} onClick={close}>
+                            {label}
+                          </Link>
+                        </motion.div>
+                      ))}
 
-                <div className="pt-2">
-                  <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Shop by room
-                  </p>
-                  <div className="space-y-1">
-                    {categoryTree.map((cat) => (
-                      <details key={cat.slug} className="group rounded-xl border border-transparent open:border-border open:bg-muted/30">
-                        <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-4 py-3 text-[15px] font-medium text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
-                          <span>{cat.name}</span>
-                          <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" aria-hidden />
-                        </summary>
-                        <ul className="max-h-48 space-y-0.5 overflow-y-auto border-t border-border/60 px-2 pb-2 pt-1">
-                          <li>
-                            <Link
-                              href={`/category/${cat.slug}`}
-                              className="block rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
-                              onClick={close}
-                            >
-                              All {cat.name.toLowerCase()}
-                            </Link>
-                          </li>
-                          {cat.subcategories.map((sub) => (
-                            <li key={sub}>
-                              <Link
-                                href={`/category/${cat.slug}/${sub}`}
-                                className="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-                                onClick={close}
-                              >
-                                {sub.replace(/-/g, " ")}
-                              </Link>
-                            </li>
+                      <div className="pt-2">
+                        <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          Shop by room
+                        </p>
+                        <div className="space-y-1">
+                          {categoryTree.map((cat) => (
+                            <details key={cat.slug} className="group rounded-xl border border-transparent open:border-border open:bg-muted/30">
+                              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-4 py-3 text-[15px] font-medium text-foreground marker:content-none [&::-webkit-details-marker]:hidden">
+                                <span>{cat.name}</span>
+                                <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" aria-hidden />
+                              </summary>
+                              <ul className="max-h-48 space-y-0.5 overflow-y-auto border-t border-border/60 px-2 pb-2 pt-1">
+                                <li>
+                                  <Link
+                                    href={`/category/${cat.slug}`}
+                                    className="block rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
+                                    onClick={close}
+                                  >
+                                    All {cat.name.toLowerCase()}
+                                  </Link>
+                                </li>
+                                {cat.subcategories.map((sub) => (
+                                  <li key={sub}>
+                                    <Link
+                                      href={`/category/${cat.slug}/${sub}`}
+                                      className="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                                      onClick={close}
+                                    >
+                                      {sub.replace(/-/g, " ")}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
                           ))}
-                        </ul>
-                      </details>
-                    ))}
-                  </div>
-                </div>
+                        </div>
+                      </div>
 
-                <Link href="/search" className={linkMobile("/search")} onClick={close}>
-                  Search
-                </Link>
-                <Link
-                  href="/admin/login"
-                  className="mt-2 block rounded-xl px-4 py-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  onClick={close}
-                >
-                  Admin
-                </Link>
-              </div>
-            </motion.nav>
-          </>
-        ) : null}
-      </AnimatePresence>
+                      <Link href="/search" className={linkMobile("/search")} onClick={close}>
+                        Search
+                      </Link>
+                      <Link
+                        href="/admin/login"
+                        className="mt-2 block rounded-xl px-4 py-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        onClick={close}
+                      >
+                        Admin
+                      </Link>
+                    </div>
+                  </motion.nav>
+                </>
+              ) : null}
+            </AnimatePresence>,
+            document.body,
+          )
+        : null}
     </header>
   );
 }

@@ -71,79 +71,82 @@ export function HeroCarousel() {
   return (
     <section className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-5 sm:pt-7 md:px-8 md:pt-10 lg:px-12 lg:pt-12">
       <div
-        className="relative aspect-[3/4] overflow-hidden rounded-3xl border border-black/[0.06] bg-neutral-950 shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] sm:aspect-[5/6] md:aspect-[2.15/1] lg:aspect-[2.4/1]"
+        className="relative flex w-full max-w-full flex-col overflow-hidden rounded-3xl border border-black/[0.06] bg-neutral-950 shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] md:block md:aspect-[2.15/1] lg:aspect-[2.35/1]"
         onMouseEnter={() => setAutoPaused(true)}
         onMouseLeave={() => setAutoPaused(false)}
         onFocusCapture={() => setAutoPaused(true)}
         onBlurCapture={onCarouselBlur}
       >
-        {slides.map((s, idx) => (
-          <motion.div
-            key={s.src}
-            className="absolute inset-0"
-            initial={false}
-            animate={{ opacity: idx === i ? 1 : 0, scale: idx === i ? 1 : 1.03 }}
-            transition={{ duration: reduce ? 0 : motionDurations.carousel, ease: editorialEase }}
-          >
-            <Image
-              src={s.src}
-              alt={s.alt}
-              fill
-              className="object-cover object-center"
-              sizes="(max-width: 768px) 100vw, 1280px"
-              priority={idx === 0}
-            />
-            {/* Base tone — keeps photos from reading too "hot" against white type */}
-            <div className="absolute inset-0 bg-neutral-950/15" aria-hidden />
-            {/* Mobile: headline sits top — lift a top scrim */}
-            <div
-              className="absolute inset-0 bg-[radial-gradient(ellipse_120%_85%_at_50%_0%,rgba(0,0,0,0.78)_0%,rgba(0,0,0,0.35)_42%,transparent_68%)] md:hidden"
-              aria-hidden
-            />
-            {/* Desktop + fallback: weight bottom-left where copy + CTAs sit */}
-            <div
-              className="absolute inset-0 hidden bg-[radial-gradient(ellipse_140%_120%_at_0%_100%,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.45)_38%,transparent_62%)] md:block"
-              aria-hidden
-            />
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/25 md:bg-gradient-to-t md:from-black/65 md:via-transparent md:to-transparent"
-              aria-hidden
-            />
-          </motion.div>
-        ))}
+        {/* Image strip: fixed height on mobile, full-bleed on md+ */}
+        <div className="relative h-[12.5rem] w-full shrink-0 overflow-hidden sm:h-[14rem] md:absolute md:inset-0 md:h-auto md:min-h-0">
+          {slides.map((s, idx) => (
+            <motion.div
+              key={s.src}
+              className="absolute inset-0"
+              initial={false}
+              animate={{ opacity: idx === i ? 1 : 0, scale: idx === i ? 1 : 1.03 }}
+              transition={{ duration: reduce ? 0 : motionDurations.carousel, ease: editorialEase }}
+            >
+              <Image
+                src={s.src}
+                alt={s.alt}
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 768px) 100vw, 1280px"
+                priority={idx === 0}
+              />
+              <div className="absolute inset-0 bg-neutral-950/15" aria-hidden />
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/25 md:hidden"
+                aria-hidden
+              />
+              <div
+                className="absolute inset-0 hidden bg-[radial-gradient(ellipse_140%_120%_at_0%_100%,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.45)_38%,transparent_62%)] md:block"
+                aria-hidden
+              />
+              <div
+                className="absolute inset-0 hidden bg-gradient-to-t from-black/65 via-transparent to-transparent md:block"
+                aria-hidden
+              />
+            </motion.div>
+          ))}
+        </div>
 
-        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-5 sm:p-7 md:flex-row md:items-end md:p-9 lg:p-11">
-          <div className="pointer-events-auto md:max-w-lg md:pb-0 lg:max-w-xl">
+        {/* Copy: below image on mobile (no dead flex space); overlay on md+ */}
+        <div className="relative z-10 flex flex-col gap-4 bg-neutral-950 px-4 py-4 pb-5 text-white sm:gap-5 sm:px-5 sm:py-5 md:absolute md:inset-0 md:justify-end md:bg-transparent md:p-8 md:pb-10 lg:p-11 lg:pb-12">
+          <div className="pointer-events-auto min-w-0 md:max-w-lg lg:max-w-xl">
             <AnimatePresence initial={false} mode="wait">
               <motion.div
                 key={slide.src}
-                initial={reduce ? false : { opacity: 0, y: 14 }}
+                initial={reduce ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduce ? undefined : { opacity: 0, y: -10 }}
-                transition={{ duration: reduce ? 0 : 0.45, ease: textEase }}
+                exit={reduce ? undefined : { opacity: 0, y: -8 }}
+                transition={{ duration: reduce ? 0 : 0.4, ease: textEase }}
                 aria-live="polite"
               >
-                <p className="text-[11px] font-medium uppercase tracking-[0.38em] text-white/80">{slide.kicker}</p>
-                <h1 className="mt-3 max-w-xl font-heading text-[1.875rem] font-semibold leading-[1.08] tracking-[-0.03em] text-white sm:mt-4 sm:text-4xl sm:leading-[1.06] md:text-[2.35rem] lg:max-w-2xl lg:text-5xl lg:leading-[1.04] [text-shadow:0_1px_3px_rgba(0,0,0,0.9),0_12px_40px_rgba(0,0,0,0.45)]">
+                <p className="text-[11px] font-medium uppercase tracking-[0.38em] text-white/70 md:text-white/80">
+                  {slide.kicker}
+                </p>
+                <h1 className="mt-2 max-w-full text-balance break-words font-heading text-[1.5rem] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:mt-2.5 sm:text-[1.65rem] md:mt-3 md:max-w-xl md:text-[2.35rem] lg:max-w-2xl lg:text-5xl lg:leading-[1.04] md:[text-shadow:0_1px_3px_rgba(0,0,0,0.9),0_12px_40px_rgba(0,0,0,0.45)]">
                   {slide.headline}
                 </h1>
-                <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/90 sm:mt-4 sm:max-w-md sm:text-[0.95rem] md:max-w-lg md:text-base [text-shadow:0_1px_2px_rgba(0,0,0,0.85)]">
+                <p className="mt-2 max-w-full break-words text-sm leading-relaxed text-white/85 md:mt-3 md:max-w-lg md:text-base md:text-white/90 md:[text-shadow:0_1px_2px_rgba(0,0,0,0.85)]">
                   {slide.dek}
                 </p>
-                <p className="mt-2.5 max-w-sm text-sm leading-relaxed text-white/82 sm:max-w-md sm:text-[0.9375rem] md:max-w-lg md:text-[0.95rem] [text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">
+                <p className="mt-1.5 max-w-full break-words text-sm leading-relaxed text-white/75 sm:mt-2 md:max-w-lg md:text-[0.95rem] md:text-white/82 md:[text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">
                   {slide.detail}
                 </p>
 
-                <div className="mt-6 flex flex-wrap items-center gap-4 sm:mt-8">
+                <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5 md:mt-7 md:gap-4">
                   <Link
                     href={slide.href}
-                    className="inline-flex h-11 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-neutral-900 shadow-[0_4px_24px_rgba(0,0,0,0.35)] transition hover:bg-white/92"
+                    className="inline-flex h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-neutral-900 shadow-md transition hover:bg-white/92 md:shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
                   >
                     Open guide
                   </Link>
                   <Link
                     href="/inspiration/feed"
-                    className="text-sm font-medium text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] underline decoration-white/50 underline-offset-[6px] transition hover:text-white hover:decoration-white"
+                    className="text-sm font-medium text-white/90 underline decoration-white/40 underline-offset-[6px] transition hover:text-white hover:decoration-white md:[text-shadow:0_1px_3px_rgba(0,0,0,0.9)]"
                   >
                     Inspiration feed
                   </Link>
@@ -153,7 +156,7 @@ export function HeroCarousel() {
           </div>
 
           <div
-            className="pointer-events-auto flex justify-center gap-2 drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] md:absolute md:bottom-8 md:right-9 md:justify-end lg:bottom-9 lg:right-11"
+            className="flex shrink-0 justify-center gap-2 pt-1 md:absolute md:bottom-8 md:right-9 md:pt-0 lg:bottom-9 lg:right-11"
             role="tablist"
             aria-label="Hero slides"
           >
@@ -165,7 +168,7 @@ export function HeroCarousel() {
                 aria-selected={idx === i}
                 aria-label={`${s.kicker}, slide ${idx + 1}`}
                 onClick={() => setI(idx)}
-                className={`h-2 rounded-full transition-[width,background-color] duration-300 ${idx === i ? "w-8 bg-white" : "w-2 bg-white/35 hover:bg-white/55"}`}
+                className={`h-2 rounded-full transition-[width,background-color] duration-300 md:drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)] ${idx === i ? "w-8 bg-white" : "w-2 bg-white/40 hover:bg-white/55"}`}
               />
             ))}
           </div>

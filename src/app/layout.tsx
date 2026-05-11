@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="min-h-[70vh] min-w-0 overflow-x-clip pb-24 md:pb-8">{children}</div>
         <SiteFooter />
         <Suspense fallback={null}>
-          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-black/5 bg-background/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md md:hidden">
+          <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/5 bg-background/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md md:hidden">
             <div className="mx-auto max-w-7xl min-w-0 overflow-x-hidden">
               <AdSlot placement="sticky-mobile" className="min-w-0" />
             </div>

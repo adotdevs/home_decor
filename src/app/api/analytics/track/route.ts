@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server"; import { trackEvent } from "@/services/analytics-service"; export async function POST(req: Request) { const payload = await req.json(); await trackEvent({ ...payload, occurredAt: new Date() }); return NextResponse.json({ ok: true }); }

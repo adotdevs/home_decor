@@ -1,0 +1,2 @@
+export const dynamic = "force-dynamic";
+import { ArticleCard } from "@/components/article/article-card"; import { listPublishedArticles } from "@/services/article-service"; export default async function LatestPage(){ const articles = await listPublishedArticles(24); return <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 md:grid-cols-3 md:px-8">{articles.map((a:any)=><ArticleCard key={a.slug} article={a} />)}</div>; }

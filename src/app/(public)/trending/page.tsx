@@ -1,0 +1,2 @@
+export const dynamic = "force-dynamic";
+import { ArticleCard } from "@/components/article/article-card"; import { connectDb } from "@/lib/db"; import { Article } from "@/models/Article"; export default async function TrendingPage(){ await connectDb(); const articles = await Article.find({ status: "published" }).sort({ popularityScore: -1 }).limit(18).lean(); return <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 md:grid-cols-3 md:px-8">{articles.map((a:any)=><ArticleCard key={a.slug} article={a} />)}</div>; }

@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server"; import { connectDb } from "@/lib/db"; import { MediaUpload } from "@/models/MediaUpload"; export async function GET() { await connectDb(); return NextResponse.json(await MediaUpload.find().sort({ createdAt: -1 }).lean()); }

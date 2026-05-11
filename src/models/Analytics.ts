@@ -1,0 +1,3 @@
+import { Schema, model, models } from "mongoose";
+const AnalyticsSchema = new Schema({ event: { type: String, index: true }, path: { type: String, index: true }, articleSlug: String, categorySlug: String, referrer: String, country: String, deviceType: String, sessionId: String, adPlacement: String, searchQuery: String, occurredAt: { type: Date, default: Date.now, index: true } }, { timestamps: true });
+export const Analytics = models.Analytics || model("Analytics", AnalyticsSchema);

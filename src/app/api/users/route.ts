@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server"; import { connectDb } from "@/lib/db"; import { User } from "@/models/User"; export async function GET() { await connectDb(); return NextResponse.json(await User.find().select("name email role isActive").lean()); }

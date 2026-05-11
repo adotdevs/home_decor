@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server"; import { analyticsSummary } from "@/services/analytics-service"; export async function GET(req: Request) { const days = Number(new URL(req.url).searchParams.get("days") || "30"); return NextResponse.json(await analyticsSummary(days)); }

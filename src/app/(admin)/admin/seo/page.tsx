@@ -1,0 +1,1 @@
+export default function Page(){return <div className="rounded-2xl border bg-card p-6"><h1 className="font-heading text-3xl">SEO Management</h1><p className="mt-2 text-muted-foreground">Manage global metadata and schema defaults.</p></div>}

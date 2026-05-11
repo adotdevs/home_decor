@@ -1,0 +1,1 @@
+import { NextResponse } from "next/server"; import { upsertArticle, listPublishedArticles } from "@/services/article-service"; export async function GET() { return NextResponse.json(await listPublishedArticles(50)); } export async function POST(req: Request) { const payload = await req.json(); return NextResponse.json(await upsertArticle(payload)); }

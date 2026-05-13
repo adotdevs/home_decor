@@ -1,9 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArticleCard } from "@/components/article/article-card";
 import { categoryTree } from "@/config/site";
 import { listTrendingArticles, searchArticles } from "@/services/article-service";
 import { SearchExperience } from "@/components/search/search-experience";
 import { buildMetadata } from "@/lib/utils/seo";
+import { getResolvedSiteBranding } from "@/services/site-settings-service";
 
 export const dynamic = "force-dynamic";
 
@@ -11,18 +13,19 @@ type Props = {
   searchParams: Promise<{ q?: string; page?: string; category?: string; tag?: string }>;
 };
 
-export async function generateMetadata({ searchParams }: Props): Promise<ReturnType<typeof buildMetadata>> {
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const p = await searchParams;
   const q = (p.q || "").trim();
+  const b = await getResolvedSiteBranding();
   if (q) {
-    return buildMetadata({
-      title: `Search “${q.slice(0, 48)}” — Luxe Home Decor Ideas`,
+    return await buildMetadata({
+      title: `Search “${q.slice(0, 48)}” — ${b.name}`,
       description: `Editorial results for “${q.slice(0, 80)}” — room guides, decor ideas, and styling playbooks.`,
       path: `/search?q=${encodeURIComponent(q)}`,
     });
   }
-  return buildMetadata({
-    title: "Search — Luxe Home Decor Ideas",
+  return await buildMetadata({
+    title: `Search — ${b.name}`,
     description: "Search decor editorials, room ideas, Pinterest-style guides, and expert styling playbooks.",
     path: "/search",
   });
@@ -38,7 +41,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
   const data = q
     ? await searchArticles({ q, limit: 24, skip, categorySlug, tagSlug })
-    : { results: [] as Record<string, unknown>[], totalApprox: 0, source: "seed" as const };
+    : { results: [] as Record<string, unknown>[], totalApprox: 0, source: "db" as const };
 
   const results = "results" in data ? data.results : [];
   const trending = await listTrendingArticles(8);

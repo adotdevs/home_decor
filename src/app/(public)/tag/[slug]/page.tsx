@@ -2,15 +2,15 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArticleCard } from "@/components/article/article-card";
-import { allSeedTags, tagToPathSlug } from "@/data/seed-content";
-import { listArticlesByTagPath } from "@/services/article-service";
+import { tagToPathSlug } from "@/data/tag-utils";
+import { listArticlesByTagPath, listDistinctPublishedTags } from "@/services/article-service";
 import { buildMetadata } from "@/lib/utils/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const label =
-    allSeedTags().find((t) => tagToPathSlug(t) === slug) || slug.replace(/-/g, " ");
-  return buildMetadata({
+  const tags = await listDistinctPublishedTags();
+  const label = tags.find((t) => tagToPathSlug(t) === slug) || slug.replace(/-/g, " ");
+  return await buildMetadata({
     title: `${label} — decor ideas & guides`,
     description: `Editorial decor ideas, room guides, and styling notes tagged “${label}”.`,
     path: `/tag/${slug}`,
@@ -19,11 +19,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function TagPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const known = allSeedTags().some((t) => tagToPathSlug(t) === slug);
+  const tags = await listDistinctPublishedTags();
+  const known = tags.some((t) => tagToPathSlug(t) === slug);
   const articles = await listArticlesByTagPath(slug, 48);
   if (!known && articles.length === 0) notFound();
 
-  const display = allSeedTags().find((t) => tagToPathSlug(t) === slug) || slug.replace(/-/g, " ");
+  const display = tags.find((t) => tagToPathSlug(t) === slug) || slug.replace(/-/g, " ");
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">

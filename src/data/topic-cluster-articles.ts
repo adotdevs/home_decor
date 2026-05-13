@@ -1,4 +1,4 @@
-/** Targeted cluster stories for topical hubs — merged in seed-content. */
+/** Targeted cluster stories for topical hubs — merged in `seed-articles/library` (seed script only). */
 export const topicClusterArticles = [
   {
     title: "Ramadan tables that glow: candle math, metal warmth, and family-scale serving",
@@ -35,7 +35,7 @@ export const topicClusterArticles = [
           "More than three identical heights in a row reads like a boutique window. Vary holder materials (glass, brass, ceramic) and keep flame paths clear from low branches.",
       },
     ],
-    internalLinks: ["/category/kitchen-and-table", "/topics/ramadan-table-eid"],
+    internalLinks: ["/category/kitchen-and-table", "/inspiration/feed"],
     authorName: "Sofia El-Amin",
     authorSlug: "sofia-el-amin",
     publishedAt: new Date(Date.now() - 400 * 86400000),
@@ -72,7 +72,7 @@ export const topicClusterArticles = [
           "Yes — in thin profiles. Think pencil-thin frames and hardware, not chunky industrial legs. Black works best as punctuation.",
       },
     ],
-    internalLinks: ["/topics/japandi-interiors", "/category/decoration"],
+    internalLinks: ["/category/decoration", "/latest"],
     authorName: "Maren Okada",
     authorSlug: "maren-okada",
     publishedAt: new Date(Date.now() - 401 * 86400000),

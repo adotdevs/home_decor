@@ -9,6 +9,16 @@ import { authCookie, verifyAdminToken } from "@/lib/utils/auth";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
+const GALLERY_CATS = new Set(["living", "kitchen", "bedroom", "bathroom", "wall-decor", "entryway", "general"]);
+
+function parseGalleryFields(formData: FormData): { showInGallery: boolean; galleryCategory?: string } {
+  const raw = formData.get("showInGallery");
+  const showInGallery = raw === "true" || raw === "1" || raw === "on";
+  const cat = formData.get("galleryCategory");
+  const galleryCategory = typeof cat === "string" && GALLERY_CATS.has(cat) ? cat : undefined;
+  return { showInGallery, galleryCategory };
+}
+
 async function requireAdmin() {
   const token = (await cookies()).get(authCookie)?.value;
   return Boolean(token && verifyAdminToken(token));
@@ -28,6 +38,10 @@ export async function POST(req: Request) {
   }
 
   const formData = await req.formData();
+  const { showInGallery, galleryCategory } = parseGalleryFields(formData);
+  if (showInGallery && !galleryCategory) {
+    return NextResponse.json({ error: "galleryCategory is required when showInGallery is true" }, { status: 400 });
+  }
   const file = formData.get("file");
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Expected file field" }, { status: 400 });
@@ -67,6 +81,8 @@ export async function POST(req: Request) {
     mimeType: file.type,
     width: 0,
     height: 0,
+    showInGallery,
+    galleryCategory: showInGallery ? galleryCategory : undefined,
   });
 
   return NextResponse.json(doc.toObject());

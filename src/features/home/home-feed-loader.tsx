@@ -3,21 +3,32 @@
 import { useState } from "react";
 import { MasonryFeed } from "@/features/home/masonry-feed";
 
-export function HomeFeedLoader({ initial }: { initial: Array<Record<string, unknown>> }) {
+export function HomeFeedLoader({
+  initial,
+  excludeSlugs,
+  chronologicalSkipStart,
+}: {
+  initial: Array<Record<string, unknown>>;
+  excludeSlugs: string[];
+  chronologicalSkipStart: number;
+}) {
   const [rows, setRows] = useState(initial);
-  const [offset, setOffset] = useState(initial.length);
+  const [chronologicalSkip, setChronologicalSkip] = useState(chronologicalSkipStart);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(initial.length < 12);
 
   async function loadMore() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/articles?offset=${offset}&limit=12`);
+      const ex = excludeSlugs.length ? `&excludeSlugs=${encodeURIComponent(excludeSlugs.join(","))}` : "&excludeSlugs=";
+      const res = await fetch(`/api/articles?offset=${chronologicalSkip}&limit=12${ex}`);
       const next = (await res.json()) as Array<Record<string, unknown>>;
       if (!next.length) setDone(true);
       else {
-        setRows((r) => [...r, ...next]);
-        setOffset((o) => o + next.length);
+        const seen = new Set(rows.map((r) => String(r.slug)));
+        const merged = next.filter((r) => !seen.has(String(r.slug)));
+        setRows((r) => [...r, ...merged]);
+        setChronologicalSkip((s) => s + next.length);
         if (next.length < 12) setDone(true);
       }
     } catch {

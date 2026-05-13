@@ -1,13 +1,12 @@
 import { absoluteUrl } from "@/lib/utils/seo";
-import { siteConfig } from "@/config/site";
 
 export function JsonLd({ data }: { data: Record<string, unknown> | Array<Record<string, unknown>> }) {
   return <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }
 
-export function articleSchema(article: Record<string, unknown>, path: string) {
+export function articleSchema(article: Record<string, unknown>, path: string, ogFallback: string, baseUrl: string) {
   const imgRaw = article.featuredImage as string | undefined;
-  const image = imgRaw?.startsWith("http") ? imgRaw : absoluteUrl(imgRaw || siteConfig.ogImage);
+  const image = imgRaw?.startsWith("http") ? imgRaw : absoluteUrl(imgRaw || ogFallback, baseUrl);
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -17,11 +16,11 @@ export function articleSchema(article: Record<string, unknown>, path: string) {
     datePublished: article.publishedAt || article.createdAt,
     dateModified: article.updatedAt,
     image,
-    mainEntityOfPage: absoluteUrl(path),
+    mainEntityOfPage: absoluteUrl(path, baseUrl),
   };
 }
 
-export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
+export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>, baseUrl: string) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -29,7 +28,7 @@ export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
       "@type": "ListItem",
       position: i + 1,
       name: x.name,
-      item: absoluteUrl(x.path),
+      item: absoluteUrl(x.path, baseUrl),
     })),
   };
 }

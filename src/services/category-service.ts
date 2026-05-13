@@ -1,6 +1,55 @@
+import { cache } from "react";
+import { categoryTree } from "@/config/site";
+import { categoryHeroImage } from "@/config/images";
 import { connectDb } from "@/lib/db";
 import { Category } from "@/models/Category";
-import { categoryTree } from "@/config/site";
+
+export type CategoryHubEditorial = {
+  title: string;
+  dek: string;
+  advice: string;
+  searches: string[];
+};
+
+function prettyCategoryLabel(categorySlug: string) {
+  return categorySlug.replaceAll("-", " ");
+}
+
+function defaultHubEditorial(categorySlug: string): CategoryHubEditorial {
+  const label = prettyCategoryLabel(categorySlug);
+  return {
+    title: `${label} ideas with editorial polish`,
+    dek: `Explore realistic styling guides, room playbooks, and Pinterest-friendly inspiration for ${label}.`,
+    advice: "Start with function, refine scale, repeat your palette, and use texture to make the room feel collected.",
+    searches: [`${label} ideas`, "home decor inspiration", "modern interior styling"],
+  };
+}
+
+/** Hub hero copy for `/category/[slug]` — from Mongo when present, else generic fallback. */
+export const resolveCategoryHubEditorial = cache(async (categorySlug: string): Promise<CategoryHubEditorial> => {
+  try {
+    await connectDb();
+    const doc = await Category.findOne({ slug: categorySlug, parentSlug: null, isActive: true })
+      .select("hubEditorial")
+      .lean();
+    const hub = doc && (doc as { hubEditorial?: Partial<CategoryHubEditorial> }).hubEditorial;
+    if (hub?.title?.trim() && hub?.dek?.trim()) {
+      const fallback = defaultHubEditorial(categorySlug);
+      return {
+        title: hub.title.trim(),
+        dek: hub.dek.trim(),
+        advice: hub.advice?.trim() || fallback.advice,
+        searches:
+          Array.isArray(hub.searches) && hub.searches.length > 0
+            ? hub.searches.map((s: unknown) => String(s).trim()).filter(Boolean)
+            : fallback.searches,
+      };
+    }
+  } catch {
+    /* use fallback */
+  }
+  return defaultHubEditorial(categorySlug);
+});
 
 export async function getCategories() {
   try {
@@ -9,5 +58,61 @@ export async function getCategories() {
     return JSON.parse(JSON.stringify(rows));
   } catch {
     return categoryTree.map((x) => ({ name: x.name, slug: x.slug, parentSlug: null, isActive: true }));
+  }
+}
+
+export type HomeCategoryCard = {
+  slug: string;
+  name: string;
+  subcategoryCount: number;
+  image: string;
+};
+
+/** Cards for “Shop the rooms — by category” on the homepage. */
+export const getHomeCategoryCards = cache(async (): Promise<HomeCategoryCard[]> => {
+  const slugs = categoryTree.map((c) => c.slug);
+  const bySlug = new Map<string, { image?: string }>();
+  try {
+    await connectDb();
+    const rows = await Category.find({ parentSlug: null, slug: { $in: slugs } }).select("slug image").lean();
+    for (const r of rows) {
+      const row = r as { slug: string; image?: string };
+      bySlug.set(row.slug, { image: row.image });
+    }
+  } catch {
+    /* fall through to defaults */
+  }
+  return categoryTree.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    subcategoryCount: c.subcategories.length,
+    image: bySlug.get(c.slug)?.image?.trim() || categoryHeroImage(c.slug),
+  }));
+});
+
+/** Hub hero on category pages — `Category.image` when set, else built-in map. */
+export const resolveCategoryHeroImage = cache(async (categorySlug: string): Promise<string> => {
+  try {
+    await connectDb();
+    const doc = await Category.findOne({ slug: categorySlug, parentSlug: null, isActive: true })
+      .select("image")
+      .lean();
+    const img = doc && (doc as { image?: string }).image?.trim();
+    if (img) return img;
+  } catch {
+    /* */
+  }
+  return categoryHeroImage(categorySlug);
+});
+
+export async function setTopLevelCategoryCardImage(slug: string, image: string | null): Promise<void> {
+  await connectDb();
+  const trimmed = image?.trim() || "";
+  const cat = await Category.findOne({ slug, parentSlug: null });
+  if (!cat) throw new Error("Category not found");
+  if (!trimmed) {
+    await Category.updateOne({ _id: cat._id }, { $unset: { image: 1 } });
+  } else {
+    await Category.updateOne({ _id: cat._id }, { $set: { image: trimmed } });
   }
 }

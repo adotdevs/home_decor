@@ -4,23 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArticleCard } from "@/components/article/article-card";
 import { seasonalHeroImage } from "@/config/images";
-import { seasonalInspiration } from "@/config/site";
 import { listArticlesByTagPath } from "@/services/article-service";
 import { buildMetadata } from "@/lib/utils/seo";
-
-const slugToSeasonTag: Record<string, string> = {
-  "spring-refresh": "spring refresh",
-  "summer-light": "summer light",
-  "autumn-warmth": "autumn warmth",
-  "winter-coziness": "winter cozy",
-};
+import { getResolvedSiteBranding, getSeasonalInspirationResolved } from "@/services/site-settings-service";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const match = seasonalInspiration.find((s) => s.slug === slug);
-  if (!match) return buildMetadata({ title: "Seasonal inspiration", description: "Editorial seasonal guides.", path: "/inspiration/feed" });
-  return buildMetadata({
-    title: `${match.name} decor ideas | Luxe Home Decor Ideas`,
+  const seasonal = await getSeasonalInspirationResolved();
+  const match = seasonal.find((s) => s.slug === slug);
+  const b = await getResolvedSiteBranding();
+  if (!match) {
+    return await buildMetadata({
+      title: `Seasonal inspiration — ${b.name}`,
+      description: "Editorial seasonal guides.",
+      path: "/inspiration/feed",
+    });
+  }
+  return await buildMetadata({
+    title: `${match.name} decor ideas | ${b.name}`,
     description: match.description,
     path: `/inspiration/seasonal/${slug}`,
   });
@@ -28,11 +29,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SeasonalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const match = seasonalInspiration.find((s) => s.slug === slug);
+  const seasonal = await getSeasonalInspirationResolved();
+  const match = seasonal.find((s) => s.slug === slug);
   if (!match) notFound();
 
-  const tag = slugToSeasonTag[slug] || match.name.toLowerCase();
-  const articles = await listArticlesByTagPath(tag.replace(/\s+/g, "-"), 36);
+  const tagPath = (match.articlesTagPath || match.slug).replace(/\s+/g, "-");
+  const articles = await listArticlesByTagPath(tagPath, 36);
   const fallback = await listArticlesByTagPath("spring-refresh", 12);
   const grid = articles.length ? articles : fallback;
   const heroKey = match.imageKey;
@@ -88,7 +90,7 @@ export default async function SeasonalPage({ params }: { params: Promise<{ slug:
         </div>
         <div className="mt-12 rounded-2xl border border-dashed border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
           <span className="text-foreground/80">Explore year-round hubs: </span>
-          {seasonalInspiration
+          {seasonal
             .filter((s) => s.slug !== slug)
             .map((s, i) => (
               <span key={s.slug}>

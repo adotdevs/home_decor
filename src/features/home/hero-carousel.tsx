@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
-import { images } from "@/config/images";
+import type { HeroSlideConfig } from "@/config/home-editorial-defaults";
+import { DEFAULT_HERO_SLIDES } from "@/config/home-editorial-defaults";
 import { editorialEase, motionDurations } from "@/styles/motion";
 
 const textEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -12,47 +13,19 @@ const textEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const AUTO_MS_DEFAULT = 7500;
 const AUTO_MS_REDUCED = 9500;
 
-const slides = [
-  {
-    src: images.heroes.editorialLiving,
-    alt: "Sunlit living room with layered neutral decor",
-    href: "/category/decoration",
-    kicker: "Living",
-    headline: "Rooms that feel lived in, still editorial",
-    dek: "Light, seating, and quiet contrast — ideas you can copy without a full reno.",
-    detail:
-      "Browse layouts that balance negative space with tactile pieces: rugs that anchor the floor plan, lamps that draw the eye, and a sofa line that still leaves room for circulation.",
-  },
-  {
-    src: images.heroes.luxeBedroom,
-    alt: "Serene bedroom with soft textiles",
-    href: "/category/bedroom",
-    kicker: "Bedroom",
-    headline: "Calm layers for real sleep",
-    dek: "Bedding, drapes, and tones that stay soft after laundry day, not just install day.",
-    detail:
-      "We favor breathable layers you can refresh seasonally, blackout solutions that still feel romantic, and nightstand setups with cord discipline — small edits that read luxe on camera and off.",
-  },
-  {
-    src: images.heroes.openKitchen,
-    alt: "Bright kitchen with natural materials",
-    href: "/category/kitchen-and-table",
-    kicker: "Kitchen & table",
-    headline: "Tables worth lingering at",
-    dek: "Serveware, surfaces, and styling notes for hosts who care about the Tuesday night meal, too.",
-    detail:
-      "From counter vignettes that survive coffee spills to table stories built on mix-and-match ceramics, these guides prioritize function first — then the polish that makes guests linger.",
-  },
-] as const;
-
-export function HeroCarousel() {
+export function HeroCarousel({ slides }: { slides: HeroSlideConfig[] }) {
+  const list = slides.length ? slides : DEFAULT_HERO_SLIDES;
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
   const [autoPaused, setAutoPaused] = useState(false);
 
+  useEffect(() => {
+    setI(0);
+  }, [list]);
+
   const tick = useCallback(() => {
-    setI((v) => (v + 1) % slides.length);
-  }, []);
+    setI((v) => (v + 1) % list.length);
+  }, [list.length]);
 
   useEffect(() => {
     if (autoPaused) return;
@@ -66,7 +39,11 @@ export function HeroCarousel() {
     if (!next || !e.currentTarget.contains(next)) setAutoPaused(false);
   }, []);
 
-  const slide = slides[i];
+  const slide = list[i];
+  const kicker = slide.kicker?.trim() || "Editorial";
+  const headline = slide.headline?.trim() || "Ideas worth saving to your boards";
+  const dek = slide.dek?.trim() ?? "";
+  const detail = slide.detail?.trim() ?? "";
 
   return (
     <section className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-5 sm:pt-7 md:px-8 md:pt-10 lg:px-12 lg:pt-12">
@@ -77,11 +54,10 @@ export function HeroCarousel() {
         onFocusCapture={() => setAutoPaused(true)}
         onBlurCapture={onCarouselBlur}
       >
-        {/* Image strip: fixed height on mobile, full-bleed on md+ */}
         <div className="relative h-[12.5rem] w-full shrink-0 overflow-hidden sm:h-[14rem] md:absolute md:inset-0 md:h-auto md:min-h-0">
-          {slides.map((s, idx) => (
+          {list.map((s, idx) => (
             <motion.div
-              key={s.src}
+              key={`${s.src}-${idx}`}
               className="absolute inset-0"
               initial={false}
               animate={{ opacity: idx === i ? 1 : 0, scale: idx === i ? 1 : 1.03 }}
@@ -112,12 +88,11 @@ export function HeroCarousel() {
           ))}
         </div>
 
-        {/* Copy: below image on mobile (no dead flex space); overlay on md+ */}
         <div className="relative z-10 flex flex-col gap-4 bg-neutral-950 px-4 py-4 pb-5 text-white sm:gap-5 sm:px-5 sm:py-5 md:absolute md:inset-0 md:justify-end md:bg-transparent md:p-8 md:pb-10 lg:p-11 lg:pb-12">
           <div className="pointer-events-auto min-w-0 md:max-w-lg lg:max-w-xl">
             <AnimatePresence initial={false} mode="wait">
               <motion.div
-                key={slide.src}
+                key={`${slide.src}-${i}`}
                 initial={reduce ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduce ? undefined : { opacity: 0, y: -8 }}
@@ -125,17 +100,21 @@ export function HeroCarousel() {
                 aria-live="polite"
               >
                 <p className="text-[11px] font-medium uppercase tracking-[0.38em] text-white/70 md:text-white/80">
-                  {slide.kicker}
+                  {kicker}
                 </p>
                 <h1 className="mt-2 max-w-full text-balance break-words font-heading text-[1.5rem] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:mt-2.5 sm:text-[1.65rem] md:mt-3 md:max-w-xl md:text-[2.35rem] lg:max-w-2xl lg:text-5xl lg:leading-[1.04] md:[text-shadow:0_1px_3px_rgba(0,0,0,0.9),0_12px_40px_rgba(0,0,0,0.45)]">
-                  {slide.headline}
+                  {headline}
                 </h1>
+                {dek ? (
                 <p className="mt-2 max-w-full break-words text-sm leading-relaxed text-white/85 md:mt-3 md:max-w-lg md:text-base md:text-white/90 md:[text-shadow:0_1px_2px_rgba(0,0,0,0.85)]">
-                  {slide.dek}
+                  {dek}
                 </p>
+                ) : null}
+                {detail ? (
                 <p className="mt-1.5 max-w-full break-words text-sm leading-relaxed text-white/75 sm:mt-2 md:max-w-lg md:text-[0.95rem] md:text-white/82 md:[text-shadow:0_1px_2px_rgba(0,0,0,0.8)]">
-                  {slide.detail}
+                  {detail}
                 </p>
+                ) : null}
 
                 <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5 md:mt-7 md:gap-4">
                   <Link
@@ -160,9 +139,9 @@ export function HeroCarousel() {
             role="tablist"
             aria-label="Hero slides"
           >
-            {slides.map((s, idx) => (
+            {list.map((s, idx) => (
               <button
-                key={s.src}
+                key={`dot-${s.src}-${idx}`}
                 type="button"
                 role="tab"
                 aria-selected={idx === i}

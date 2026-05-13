@@ -2,15 +2,17 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { ArticleDetail } from "@/components/article/article-detail";
 import { JsonLd, articleSchema, breadcrumbJsonLd, faqSchema } from "@/components/seo/json-ld";
-import { siteConfig } from "@/config/site";
 import { getArticleBySlug, getRelatedArticles } from "@/services/article-service";
 import { buildMetadata } from "@/lib/utils/seo";
+import { getResolvedSiteBranding } from "@/services/site-settings-service";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const article: Record<string, unknown> | null = await getArticleBySlug(slug);
-  if (!article) return buildMetadata({ title: "Article not found", description: "This article does not exist." });
-  return buildMetadata({
+  if (!article) {
+    return await buildMetadata({ title: "Article not found", description: "This article does not exist." });
+  }
+  return await buildMetadata({
     title: String(article.seoTitle || article.title),
     description: String(article.seoDescription || article.excerpt),
     path: `/article/${article.slug}`,
@@ -22,6 +24,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) return notFound();
+
+  const b = await getResolvedSiteBranding();
 
   const related = await getRelatedArticles(
     { slug: article.slug, categorySlug: article.categorySlug, tags: article.tags },
@@ -39,13 +43,15 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
-      <JsonLd data={articleSchema(article as Record<string, unknown>, `/article/${article.slug}`)} />
-      <JsonLd data={breadcrumbJsonLd(crumbs)} />
+      <JsonLd
+        data={articleSchema(article as Record<string, unknown>, `/article/${article.slug}`, b.ogImage, b.url)}
+      />
+      <JsonLd data={breadcrumbJsonLd(crumbs, b.url)} />
       {article.faq?.length ? <JsonLd data={faqSchema(article.faq)} /> : null}
       <ArticleDetail
         article={article as Record<string, unknown>}
         related={related as Array<Record<string, unknown>>}
-        shareBaseUrl={siteConfig.url}
+        shareBaseUrl={b.url}
       />
     </>
   );

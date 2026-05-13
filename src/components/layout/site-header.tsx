@@ -16,8 +16,7 @@ const nav = [
   ["Trending", "/trending"],
   ["Feed", "/inspiration/feed"],
   ["Gallery", "/inspiration-gallery"],
-  ["Tags", "/tags"],
-  ["Newsletter", "/newsletter"],
+  // ["Tags", "/tags"],
 ] as const;
 
 const panelEase = [0.16, 1, 0.3, 1] as const;
@@ -27,7 +26,7 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SiteHeader() {
+export function SiteHeader({ siteName }: { siteName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -36,7 +35,7 @@ export function SiteHeader() {
   const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    setMounted(true);
+    queueMicrotask(() => setMounted(true));
   }, []);
 
   const close = useCallback(() => {
@@ -112,7 +111,7 @@ export function SiteHeader() {
         <Link href="/" className="relative flex min-w-0 shrink-0 items-center">
           <Image
             src="/logo.svg"
-            alt="Luxe Home Decor Ideas"
+            alt={siteName}
             width={160}
             height={32}
             priority
@@ -126,39 +125,75 @@ export function SiteHeader() {
               {label}
             </Link>
           ))}
-          <div className="relative group">
+          <div className="group relative">
             <button
               type="button"
               className={cn(
-                "inline-flex items-center gap-1 transition-colors",
-                pathname.startsWith("/category") ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
+                "inline-flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-2 text-[15px] transition-colors md:text-base",
+                pathname.startsWith("/category")
+                  ? "font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
               )}
               aria-expanded={false}
-              aria-haspopup="true"
+              aria-haspopup="menu"
             >
               Rooms
-              <ChevronDown className="h-3.5 w-3.5 opacity-70" strokeWidth={2} aria-hidden />
+              <ChevronDown
+                className="h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 ease-out group-hover:rotate-180 md:h-[1.125rem] md:w-[1.125rem]"
+                strokeWidth={2}
+                aria-hidden
+              />
             </button>
-            <div className="invisible absolute left-0 top-full z-50 mt-2 max-h-[70vh] w-56 overflow-y-auto rounded-xl border border-border bg-popover p-2 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100">
-              {categoryTree.map((cat) => (
-                <div key={cat.slug} className="border-b border-border/60 py-2 last:border-0">
-                  <Link href={`/category/${cat.slug}`} className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
-                    {cat.name}
-                  </Link>
-                  <ul className="mt-1 max-h-36 overflow-y-auto pl-2">
-                    {cat.subcategories.slice(0, 8).map((sub) => (
-                      <li key={sub}>
-                        <Link
-                          href={`/category/${cat.slug}/${sub}`}
-                          className="block rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                        >
-                          {sub.replace(/-/g, " ")}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+            {/* Padding = hover bridge between trigger and panel */}
+            <div
+              className={cn(
+                "invisible absolute left-1/2 top-full z-50 w-[min(52rem,calc(100vw-1.5rem))] -translate-x-1/2 pt-4 opacity-0 transition-[opacity,visibility] duration-200 ease-out",
+                "xl:w-[min(60rem,calc(100vw-2rem))]",
+                "group-hover:visible group-hover:opacity-100",
+                "group-focus-within:visible group-focus-within:opacity-100",
+              )}
+            >
+              <div
+                className={cn(
+                  "scrollbar-subtle max-h-[min(36rem,calc(100vh-5.5rem))] scroll-smooth overflow-y-auto overscroll-contain rounded-3xl border border-black/[0.07] bg-popover/95 p-5 pb-6 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.04)] backdrop-blur-md",
+                  "md:max-h-[min(40rem,calc(100vh-6rem))] md:p-7 md:pb-8",
+                  "xl:max-h-[min(44rem,calc(100vh-6rem))] xl:p-8 xl:pb-9",
+                )}
+              >
+                <div className="mb-5 border-b border-border/80 pb-4 md:mb-6 md:pb-5">
+                  <p className="font-heading text-lg font-semibold tracking-tight text-foreground md:text-xl">Shop by room</p>
+                  <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-[15px]">
+                    Browse categories and sub-topics — each link opens curated guides and inspiration.
+                  </p>
                 </div>
-              ))}
+                <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3 lg:gap-x-6 xl:gap-x-8">
+                  {categoryTree.map((cat) => (
+                    <div key={cat.slug} className="min-w-0">
+                      <Link
+                        href={`/category/${cat.slug}`}
+                        className="group/room block rounded-2xl border border-transparent bg-muted/45 px-4 py-2.5 transition-all duration-200 hover:border-primary/20 hover:bg-primary/[0.08] md:px-5 md:py-2.5"
+                      >
+                        <span className="font-heading text-lg font-semibold tracking-tight text-foreground group-hover/room:text-primary md:text-xl">
+                          {cat.name}
+                        </span>
+                        <span className="mt-0 block text-xs font-medium text-primary/80">View all →</span>
+                      </Link>
+                      <ul className="mt-0 space-y-0">
+                        {cat.subcategories.map((sub) => (
+                          <li key={sub}>
+                            <Link
+                              href={`/category/${cat.slug}/${sub}`}
+                              className="block rounded-lg px-3 py-2 text-[15px] leading-snug text-muted-foreground transition-colors hover:bg-background hover:text-foreground hover:shadow-sm md:text-base md:py-2 md:pl-4"
+                            >
+                              {sub.replace(/-/g, " ")}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
           <Link href="/search" className={linkDesktop("/search")}>
@@ -238,7 +273,7 @@ export function SiteHeader() {
                         <X className="h-5 w-5" strokeWidth={1.75} />
                       </button>
                     </div>
-                    <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 pb-safe">
+                    <div className="scrollbar-subtle flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain scroll-smooth p-3 pb-safe">
                       {nav.map(([label, href], i) => (
                         <motion.div
                           key={href}
@@ -267,7 +302,7 @@ export function SiteHeader() {
                                 <span>{cat.name}</span>
                                 <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" aria-hidden />
                               </summary>
-                              <ul className="max-h-48 space-y-0.5 overflow-y-auto border-t border-border/60 px-2 pb-2 pt-1">
+                              <ul className="scrollbar-subtle max-h-[min(50vh,19rem)] space-y-0.5 overflow-y-auto overscroll-contain border-t border-border/60 px-2 pb-2 pt-1">
                                 <li>
                                   <Link
                                     href={`/category/${cat.slug}`}

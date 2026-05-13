@@ -11,13 +11,13 @@ export function ArticleShareRow({ baseUrl, title, slug }: { baseUrl: string; tit
         href={pin}
         target="_blank"
         rel="noopener noreferrer"
-        className="rounded-full border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+        className="cursor-pointer rounded-full border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
       >
         Pinterest
       </a>
       <button
         type="button"
-        className="rounded-full border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+        className="cursor-pointer rounded-full border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
         onClick={() => navigator.clipboard.writeText(url)}
       >
         Copy link

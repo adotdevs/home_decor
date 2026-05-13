@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { ArticleShareRow } from "@/components/article/article-share-row";
@@ -79,16 +78,17 @@ export function ArticleDetail({
             <ArticleShareRow baseUrl={shareBaseUrl} title={String(article.title)} slug={String(article.slug)} />
 
             {article.featuredImage ? (
-              <div className="relative mt-10 aspect-[21/9] w-full overflow-hidden rounded-3xl border border-black/5 shadow-lg md:aspect-[2.4/1]">
-                <Image
+              <figure className="mt-10 overflow-hidden rounded-3xl border border-black/5 shadow-lg">
+                {/* Native img so the browser loads the original file bytes (no Next.js recompression). */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={String(article.featuredImage)}
                   alt={`${String(article.title)} — hero photograph for editorial decor feature`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 1200px"
-                  priority
+                  className="h-auto w-full object-cover"
+                  loading="eager"
+                  decoding="async"
                 />
-              </div>
+              </figure>
             ) : null}
 
             {toc.length > 0 ? (
@@ -120,16 +120,21 @@ export function ArticleDetail({
                 }
                 if (block.type === "image") {
                   return (
-                    <figure key={i} className="my-10 overflow-hidden rounded-2xl border border-black/5 shadow-sm">
-                      <div className="relative aspect-[16/10] w-full">
-                        <Image
-                          src={block.content}
-                          alt={block.alt || "Decor inspiration photograph supporting the article"}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 800px"
-                        />
-                      </div>
+                    <figure
+                      key={i}
+                      className="my-10 -mx-4 w-[calc(100%+2rem)] max-w-none overflow-hidden rounded-2xl border border-black/5 shadow-sm sm:-mx-6 sm:w-[calc(100%+3rem)] md:mx-0 md:w-full"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={block.content}
+                        alt={block.alt || "Decor inspiration photograph supporting the article"}
+                        className="h-auto w-full max-h-none"
+                        loading={i < 3 ? "eager" : "lazy"}
+                        decoding="async"
+                      />
+                      {block.alt ? (
+                        <figcaption className="px-3 py-2 text-center text-sm text-muted-foreground">{block.alt}</figcaption>
+                      ) : null}
                     </figure>
                   );
                 }

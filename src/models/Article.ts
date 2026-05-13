@@ -1,4 +1,4 @@
-import { Schema, model, models } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const ContentBlock = new Schema(
   {
@@ -35,10 +35,23 @@ const ArticleSchema = new Schema(
     focusKeyword: String,
     views: { type: Number, default: 0 },
     popularityScore: { type: Number, default: 0, index: true },
+    /** Lower = higher in trending when set (manual slots). Omit for pure popularity ordering. */
+    trendingRank: { type: Number, default: undefined },
+    /** Hide article from /trending and home “most pinned” rail */
+    excludeFromTrending: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
 
 ArticleSchema.index({ title: "text", excerpt: "text", tags: "text" });
 
-export const Article = models.Article || model("Article", ArticleSchema);
+/**
+ * Next.js dev / Turbopack can keep a stale compiled model on hot reload; old schemas strip fields
+ * that were added later (e.g. trendingRank, excludeFromTrending). Drop the cache in development.
+ */
+if (process.env.NODE_ENV !== "production" && mongoose.models.Article) {
+  delete mongoose.models.Article;
+}
+
+export const Article =
+  mongoose.models.Article ?? mongoose.model("Article", ArticleSchema);

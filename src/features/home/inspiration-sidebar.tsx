@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { AdSlot } from "@/components/ads/ad-slot";
-import { seasonalInspiration } from "@/config/site";
+import type { DefaultSeasonalItem } from "@/config/site-defaults";
 import { MotionSurface } from "@/features/home/motion-surface";
 
-export function InspirationSidebar() {
+export function InspirationSidebar({ seasonalItems }: { seasonalItems: DefaultSeasonalItem[] }) {
   return (
     <aside className="order-1 lg:order-2 lg:col-span-1">
       <p className="mb-3 pl-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground lg:hidden">
@@ -45,7 +45,7 @@ export function InspirationSidebar() {
         >
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Seasonal guides</p>
           <ul className="mt-4 space-y-3 text-sm">
-            {seasonalInspiration.map((s) => (
+            {seasonalItems.map((s) => (
               <li key={s.slug}>
                 <Link
                   href={`/inspiration/seasonal/${s.slug}`}

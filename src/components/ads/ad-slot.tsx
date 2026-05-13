@@ -42,15 +42,16 @@ export async function AdSlot({ placement, className }: { placement: string; clas
 
   if (!ad) {
     return (
-      <aside
-        className={cn(
-          "mx-auto w-full max-w-full min-w-0 break-words rounded-2xl border border-dashed border-border bg-muted/30 p-4 text-center text-xs leading-snug text-muted-foreground",
-          layout.root,
-          className,
-        )}
-      >
-        Ad slot: {placement}
-      </aside>
+      <></>
+      // <aside
+      //   className={cn(
+      //     "mx-auto w-full max-w-full min-w-0 break-words rounded-2xl border border-dashed border-border bg-muted/30 p-4 text-center text-xs leading-snug text-muted-foreground",
+      //     layout.root,
+      //     className,
+      //   )}
+      // >
+      //   Ad slot: {placement}
+      // </aside>
     );
   }
 

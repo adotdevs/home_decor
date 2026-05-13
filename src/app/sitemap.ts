@@ -1,13 +1,14 @@
 export const dynamic = "force-dynamic";
 import type { MetadataRoute } from "next";
-import { absoluteUrl } from "@/lib/utils/seo";
+import { categoryTree } from "@/config/site";
+import { tagToPathSlug } from "@/data/tag-utils";
 import { connectDb } from "@/lib/db";
 import { Article } from "@/models/Article";
-import { categoryTree, seasonalInspiration } from "@/config/site";
-import { allSeedTags, tagToPathSlug, seedArticles } from "@/data/seed-content";
-import { topicHubs } from "@/config/curations";
+import { absoluteUrl } from "@/lib/utils/seo";
+import { getResolvedSiteBranding, getSeasonalInspirationResolved } from "@/services/site-settings-service";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [base, seasonalItems] = await Promise.all([getResolvedSiteBranding(), getSeasonalInspirationResolved()]);
   const now = new Date();
   const core = [
     "",
@@ -23,45 +24,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/privacy-policy",
     "/terms",
     "/cookie-policy",
-  ].map((url) => ({ url: absoluteUrl(url), lastModified: now }));
+  ].map((url) => ({ url: absoluteUrl(url, base.url), lastModified: now }));
 
-  const seasonal = seasonalInspiration.map((s) => ({
-    url: absoluteUrl(`/inspiration/seasonal/${s.slug}`),
-    lastModified: now,
-  }));
-
-  const tagUrls = allSeedTags().map((t) => ({
-    url: absoluteUrl(`/tag/${tagToPathSlug(t)}`),
+  const seasonal = seasonalItems.map((s) => ({
+    url: absoluteUrl(`/inspiration/seasonal/${s.slug}`, base.url),
     lastModified: now,
   }));
 
   const categoryUrls = categoryTree.flatMap((c) => [
-    { url: absoluteUrl(`/category/${c.slug}`), lastModified: now },
+    { url: absoluteUrl(`/category/${c.slug}`, base.url), lastModified: now },
     ...c.subcategories.map((sub) => ({
-      url: absoluteUrl(`/category/${c.slug}/${sub}`),
+      url: absoluteUrl(`/category/${c.slug}/${sub}`, base.url),
       lastModified: now,
     })),
   ]);
 
-  const topicUrls = topicHubs.map((t) => ({
-    url: absoluteUrl(`/topics/${t.slug}`),
-    lastModified: now,
-  }));
-
+  let tagUrls: MetadataRoute.Sitemap = [];
   let articleUrls: MetadataRoute.Sitemap = [];
   try {
     await connectDb();
+    const tagLabels = await Article.distinct("tags", { status: "published" });
+    tagUrls = [...new Set((tagLabels as string[]).map((t) => String(t).trim()).filter(Boolean))].map((t) => ({
+      url: absoluteUrl(`/tag/${tagToPathSlug(t)}`, base.url),
+      lastModified: now,
+    }));
     const articles = await Article.find({ status: "published" }).select("slug updatedAt").lean();
     articleUrls = articles.map((a: { slug: string; updatedAt?: Date }) => ({
-      url: absoluteUrl(`/article/${a.slug}`),
+      url: absoluteUrl(`/article/${a.slug}`, base.url),
       lastModified: a.updatedAt || now,
     }));
   } catch {
-    articleUrls = seedArticles.map((a) => ({
-      url: absoluteUrl(`/article/${a.slug}`),
-      lastModified: now,
-    }));
+    tagUrls = [];
+    articleUrls = [];
   }
 
-  return [...core, ...seasonal, ...tagUrls, ...categoryUrls, ...topicUrls, ...articleUrls];
+  return [...core, ...seasonal, ...tagUrls, ...categoryUrls, ...articleUrls];
 }

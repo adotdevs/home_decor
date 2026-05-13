@@ -1,8 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { shopTheLook } from "@/config/curations";
+import type { ShopTheLookItem } from "@/services/site-editorial-service";
 
-export function ShopTheLookRow() {
+export function ShopTheLookRow({ items }: { items: ShopTheLookItem[] }) {
+  const list = items.length ? items : [];
+  if (!list.length) return null;
+
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-5 md:px-8">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -17,9 +20,9 @@ export function ShopTheLookRow() {
         </Link>
       </div>
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {shopTheLook.map((item) => (
+        {list.map((item) => (
           <Link
-            key={item.title}
+            key={`${item.href}-${item.title}`}
             href={item.href}
             className="group overflow-hidden rounded-3xl border border-black/5 bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
           >
@@ -30,6 +33,7 @@ export function ShopTheLookRow() {
                 fill
                 className="object-cover transition duration-700 group-hover:scale-105"
                 sizes="300px"
+                unoptimized={item.image.startsWith("http")}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               <p className="absolute bottom-3 left-3 right-3 font-heading text-lg text-white drop-shadow">{item.title}</p>

@@ -1,16 +1,22 @@
 export const dynamic = "force-dynamic";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { allSeedTags, tagToPathSlug } from "@/data/seed-content";
+import { tagToPathSlug } from "@/data/tag-utils";
 import { buildMetadata } from "@/lib/utils/seo";
+import { listDistinctPublishedTags } from "@/services/article-service";
+import { getResolvedSiteBranding } from "@/services/site-settings-service";
 
-export const metadata = buildMetadata({
-  title: "Decor tags & topics | Luxe Home Decor Ideas",
-  description: "Browse every styling topic we cover — from quiet luxury palettes to kid-proof design.",
-  path: "/tags",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const b = await getResolvedSiteBranding();
+  return await buildMetadata({
+    title: `Decor tags & topics | ${b.name}`,
+    description: "Browse every styling topic we cover — from quiet luxury palettes to kid-proof design.",
+    path: "/tags",
+  });
+}
 
-export default function TagsIndexPage() {
-  const tags = allSeedTags();
+export default async function TagsIndexPage() {
+  const tags = await listDistinctPublishedTags();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 md:px-8">

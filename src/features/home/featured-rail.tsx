@@ -9,6 +9,10 @@ import { ArticleRatingBadge } from "@/components/reviews/article-rating-badge";
 import { editorialEase } from "@/styles/motion";
 import { resolveArticleFeaturedAlt } from "@/lib/image-alt";
 
+/** Scale-only: parent rail uses overflow-y-hidden, which clips translateY reveals. */
+const RAIL_REVEAL_PRE = { opacity: 1, y: 0, scale: 0.92 } as const;
+const RAIL_REVEAL_SETTLED = { opacity: 1, y: 0, scale: 1 } as const;
+
 export function FeaturedRail({ articles }: { articles: Array<Record<string, unknown>> }) {
   const reduce = useReducedMotion();
   if (!articles.length) return null;
@@ -24,7 +28,10 @@ export function FeaturedRail({ articles }: { articles: Array<Record<string, unkn
           viewportMargin={viewportPresets.rail}
           viewportAmount={0.01}
           delay={reduce ? 0 : i * 0.045}
-          duration={0.68}
+          duration={0.88}
+          fastPolishMs={1100}
+          offscreen={{ ...RAIL_REVEAL_PRE }}
+          onscreen={{ ...RAIL_REVEAL_SETTLED }}
           transition={{ ease: editorialEase }}
           className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center sm:w-[min(22rem,calc(100vw-3rem))] md:w-[340px]"
         >

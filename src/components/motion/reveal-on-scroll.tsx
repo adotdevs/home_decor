@@ -1,7 +1,7 @@
 "use client";
 
 import type { MutableRefObject, ReactNode } from "react";
-import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, useInView, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 import { motionDebug } from "@/lib/motion/motion-debug";
 import { useMotionHydrationProbe } from "@/lib/motion/use-motion-hydration-probe";
@@ -15,6 +15,12 @@ import {
   type MotionViewportMargin,
   viewportPresets,
 } from "@/lib/motion/presets";
+
+/** Cap debug ingest: many RevealOnScroll instances mount on the home page. */
+let revealDbgMountSeq = 0;
+let revealDbgFlipSeq = 0;
+const REVEAL_DBG_MOUNT_CAP = 14;
+const REVEAL_DBG_FLIP_CAP = 36;
 
 export type RevealOnScrollProps = Omit<HTMLMotionProps<"div">, "initial" | "animate"> & {
   children: ReactNode;
@@ -51,7 +57,8 @@ function mergePolish(
  * IntersectionObserver only accelerates “settled” polish; fast fallback guarantees it regardless of IO.
  *
  * `animate` uses stable object identities from useMemo so Framer Motion can tween instead of
- * resetting when a parent re-renders (inline style objects used to break transitions).
+ * resetting when a parent re-renders. `motionTransition` is keyed by JSON.stringify(transition)
+ * so inline `transition={{ ease }}` does not create a new object identity every render.
  */
 export const RevealOnScroll = forwardRef<HTMLDivElement, RevealOnScrollProps>(function RevealOnScroll(
   {
@@ -77,11 +84,16 @@ export const RevealOnScroll = forwardRef<HTMLDivElement, RevealOnScrollProps>(fu
     margin: viewportMargin,
     amount: viewportAmount,
   });
+  const inViewRef = useRef(inView);
+  inViewRef.current = inView;
   const [fastKick, setFastKick] = useState(false);
   const [lateKick, setLateKick] = useState(false);
+  const prevShowSettledRef = useRef<boolean | null>(null);
 
   const offKey = JSON.stringify(offscreen ?? null);
   const onKey = JSON.stringify(onscreen ?? null);
+  /** Parent `transition={{ ease }}` must not change identity every render or Framer restarts tweens. */
+  const transitionStableKey = JSON.stringify(transition ?? null);
   const preStyle = useMemo(() => mergePolish(polishPreReveal, offscreen), [offKey, offscreen]);
   const settledStyle = useMemo(() => mergePolish(polishSettled, onscreen), [onKey, onscreen]);
 
@@ -114,15 +126,109 @@ export const RevealOnScroll = forwardRef<HTMLDivElement, RevealOnScrollProps>(fu
 
   const showSettled = prefersReducedMotion || inView || fastKick || lateKick;
 
-  const motionTransition = useMemo(
-    () => ({
+  // #region agent log
+  const dbgMountId = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (dbgMountId.current === null) {
+      dbgMountId.current = ++revealDbgMountSeq;
+    }
+    if ((dbgMountId.current ?? 0) > REVEAL_DBG_MOUNT_CAP) return;
+    const mountId = dbgMountId.current;
+    const el = localRef.current;
+    const transformAtLayout = el ? window.getComputedStyle(el).transform : "no-el";
+    fetch("http://127.0.0.1:7705/ingest/38df8013-2756-4c23-b7bd-fa85f11e429e", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7f7211" },
+      body: JSON.stringify({
+        sessionId: "7f7211",
+        hypothesisId: "H1",
+        location: "reveal-on-scroll.tsx:layoutMount",
+        message: "RevealOnScroll first layout",
+        data: {
+          dbgRun: "post-hero-xform",
+          mountId,
+          inView,
+          fastKick,
+          lateKick,
+          showSettled,
+          prefersReducedMotion,
+          duration,
+          fastPolishMs,
+          pre: { y: preStyle.y, scale: preStyle.scale },
+          settled: { y: settledStyle.y, scale: settledStyle.scale },
+          isRailPose: offKey.includes("0.92"),
+          transformAtLayout,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    const raf = requestAnimationFrame(() => {
+      const el2 = localRef.current;
+      fetch("http://127.0.0.1:7705/ingest/38df8013-2756-4c23-b7bd-fa85f11e429e", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7f7211" },
+        body: JSON.stringify({
+          sessionId: "7f7211",
+          hypothesisId: "H5",
+          location: "reveal-on-scroll.tsx:afterRAF",
+          message: "RevealOnScroll rAF1 transform",
+          data: {
+            dbgRun: "post-hero-xform",
+            mountId,
+            transform: el2 ? window.getComputedStyle(el2).transform : "no-el",
+            showSettled,
+            inView,
+            fastKick,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  // #endregion
+
+  // #region agent log
+  useEffect(() => {
+    const prev = prevShowSettledRef.current;
+    prevShowSettledRef.current = showSettled;
+    if (prev === null) return;
+    if (prev === showSettled) return;
+    if (revealDbgFlipSeq >= REVEAL_DBG_FLIP_CAP) return;
+    revealDbgFlipSeq += 1;
+    fetch("http://127.0.0.1:7705/ingest/38df8013-2756-4c23-b7bd-fa85f11e429e", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7f7211" },
+      body: JSON.stringify({
+        sessionId: "7f7211",
+        hypothesisId: "H3",
+        location: "reveal-on-scroll.tsx:showSettledFlip",
+        message: "showSettled changed",
+        data: {
+          dbgRun: "post-hero-xform",
+          mountId: dbgMountId.current,
+          from: prev,
+          to: showSettled,
+          inView,
+          fastKick,
+          lateKick,
+          prefersReducedMotion,
+          isRailPose: offKey.includes("0.92"),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }, [showSettled, inView, fastKick, lateKick, prefersReducedMotion, offKey]);
+  // #endregion
+
+  const motionTransition = useMemo(() => {
+    return {
       duration: prefersReducedMotion ? 0 : duration,
       delay: prefersReducedMotion ? 0 : delay,
       ease: editorialEase,
-      ...transition,
-    }),
-    [prefersReducedMotion, duration, delay, transition],
-  );
+      ...(transition ?? {}),
+    };
+  }, [prefersReducedMotion, duration, delay, transitionStableKey]);
 
   function setRefs(node: HTMLDivElement | null) {
     localRef.current = node;

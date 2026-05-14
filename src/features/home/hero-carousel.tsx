@@ -48,8 +48,43 @@ export function HeroCarousel({ slides }: { slides: HeroSlideConfig[] }) {
 
   return (
     <section className="relative mx-auto max-w-7xl px-4 pt-5 sm:px-5 sm:pt-7 md:px-8 md:pt-10 lg:px-12 lg:pt-12">
-      <div
+      <motion.div
         className="relative flex w-full max-w-full flex-col overflow-hidden rounded-3xl border border-black/[0.06] bg-neutral-950 shadow-[0_24px_80px_-28px_rgba(0,0,0,0.55)] md:block md:aspect-[2.15/1] lg:aspect-[2.35/1]"
+        initial={reduce ? false : { y: 28, scale: 0.93 }}
+        animate={{ y: 0, scale: 1 }}
+        transition={{ duration: reduce ? 0 : motionDurations.entrance, ease: editorialEase }}
+        onAnimationStart={() => {
+          // #region agent log
+          fetch("http://127.0.0.1:7705/ingest/38df8013-2756-4c23-b7bd-fa85f11e429e", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7f7211" },
+            body: JSON.stringify({
+              sessionId: "7f7211",
+              hypothesisId: "H-hero",
+              location: "hero-carousel.tsx:shell",
+              message: "hero shell onAnimationStart",
+              data: { reduce },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+          // #endregion
+        }}
+        onAnimationComplete={() => {
+          // #region agent log
+          fetch("http://127.0.0.1:7705/ingest/38df8013-2756-4c23-b7bd-fa85f11e429e", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7f7211" },
+            body: JSON.stringify({
+              sessionId: "7f7211",
+              hypothesisId: "H-hero",
+              location: "hero-carousel.tsx:shell",
+              message: "hero shell onAnimationComplete",
+              data: { reduce },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+          // #endregion
+        }}
         onMouseEnter={() => setAutoPaused(true)}
         onMouseLeave={() => setAutoPaused(false)}
         onFocusCapture={() => setAutoPaused(true)}
@@ -154,7 +189,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlideConfig[] }) {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

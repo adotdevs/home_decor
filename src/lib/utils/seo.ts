@@ -30,7 +30,7 @@ export async function buildMetadata(input: {
       url,
       siteName: b.name,
       type: "website",
-      images: [{ url: og, width: 1200, height: 630 }],
+      images: [{ url: og, width: 1200, height: 630, alt: b.ogImageAlt }],
     },
     twitter: {
       card: "summary_large_image",

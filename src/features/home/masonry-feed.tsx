@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { MasonryReveal } from "@/components/motion/wrappers";
 import { images } from "@/config/images";
+import { editorialEase } from "@/styles/motion";
+import { resolveArticleFeaturedAlt } from "@/lib/image-alt";
 
 const heights = ["h-56", "h-72", "h-64", "h-80", "h-60", "h-72"];
-const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 export function MasonryFeed({ articles, maxItems = 12 }: { articles: Array<Record<string, unknown>>; maxItems?: number }) {
   const reduce = useReducedMotion();
@@ -14,12 +16,11 @@ export function MasonryFeed({ articles, maxItems = 12 }: { articles: Array<Recor
   return (
     <div className="min-w-0 columns-1 gap-4 sm:columns-2 lg:columns-3">
       {tiles.map((a, i) => (
-        <motion.div
+        <MasonryReveal
           key={String(a.slug)}
-          initial={reduce ? false : { opacity: 0, y: 14 }}
-          whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.12, margin: "0px 0px -48px 0px" }}
-          transition={{ duration: 0.65, delay: reduce ? 0 : (i % 6) * 0.035, ease }}
+          delay={reduce ? 0 : (i % 6) * 0.035}
+          duration={0.65}
+          transition={{ ease: editorialEase }}
           className={`mb-4 break-inside-avoid ${heights[i % heights.length]}`}
         >
           <Link
@@ -28,7 +29,7 @@ export function MasonryFeed({ articles, maxItems = 12 }: { articles: Array<Recor
           >
             <Image
               src={String(a.featuredImage || images.gallery((i % 6) + 1))}
-              alt={String(a.title)}
+              alt={resolveArticleFeaturedAlt(a)}
               fill
               className="object-cover transition-transform duration-[1.05s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
               sizes="(max-width: 640px) 100vw, 400px"
@@ -41,7 +42,7 @@ export function MasonryFeed({ articles, maxItems = 12 }: { articles: Array<Recor
               <p className="mt-1 font-heading text-lg leading-snug">{String(a.title)}</p>
             </div>
           </Link>
-        </motion.div>
+        </MasonryReveal>
       ))}
     </div>
   );

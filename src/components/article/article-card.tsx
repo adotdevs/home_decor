@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArticleRatingBadge } from "@/components/reviews/article-rating-badge";
 import { isPublishedWithinLastDays } from "@/lib/utils/article-age";
+import { readingMinutesForArticle } from "@/lib/utils/content";
+import { resolveArticleFeaturedAlt } from "@/lib/image-alt";
 import { cn } from "@/lib/utils";
 
 type CardArticle = {
@@ -10,7 +12,11 @@ type CardArticle = {
   excerpt?: string;
   categorySlug?: string;
   readingTime?: number;
+  contentBlocks?: unknown;
+  faq?: unknown;
   featuredImage?: string;
+  featuredImageAlt?: string;
+  featuredImageAutoAlt?: string;
   reviewAverage?: number;
   reviewCount?: number;
   publishedAt?: string | Date | null;
@@ -36,8 +42,17 @@ export function ArticleCard({ article }: { article: CardArticle }) {
   const cnt = Number(article.reviewCount ?? 0);
   const showRating = cnt > 0 && avg > 0;
   const showNew = isPublishedWithinLastDays(article.publishedAt, 7);
+  const readMins = readingMinutesForArticle({
+    contentBlocks: article.contentBlocks,
+    faq: article.faq,
+    excerpt: article.excerpt,
+    title: article.title,
+    readingTime: article.readingTime,
+  });
 
   const href = `/article/${article.slug}`;
+
+  const cardAlt = resolveArticleFeaturedAlt(article as Record<string, unknown>);
 
   return (
     <article
@@ -47,7 +62,7 @@ export function ArticleCard({ article }: { article: CardArticle }) {
       <Link href={href} className="relative block h-48 w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
         <Image
           src={article.featuredImage || `/images/categories/${article.categorySlug || "decoration"}.svg`}
-          alt={`${article.title} inspiration visual`}
+          alt={cardAlt}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           quality={100}
@@ -78,7 +93,7 @@ export function ArticleCard({ article }: { article: CardArticle }) {
         </h3>
         <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{article.excerpt}</p>
         <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-          <span>{article.readingTime || 5} min read</span>
+          <span>{readMins} min read</span>
           <Link href={href} className="font-semibold text-foreground hover:underline">
             Read
           </Link>

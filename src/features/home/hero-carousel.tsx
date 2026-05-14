@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { HeroSlideConfig } from "@/config/home-editorial-defaults";
 import { DEFAULT_HERO_SLIDES } from "@/config/home-editorial-defaults";
 import { editorialEase, motionDurations } from "@/styles/motion";
+import { resolveHeroSlideAlt } from "@/lib/image-alt";
 
 const textEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -65,7 +66,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlideConfig[] }) {
             >
               <Image
                 src={s.src}
-                alt={s.alt}
+                alt={resolveHeroSlideAlt(s)}
                 fill
                 className="object-cover object-center"
                 sizes="(max-width: 768px) 100vw, 1280px"
@@ -93,7 +94,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlideConfig[] }) {
             <AnimatePresence initial={false} mode="wait">
               <motion.div
                 key={`${slide.src}-${i}`}
-                initial={reduce ? false : { opacity: 0, y: 12 }}
+                initial={reduce ? false : { opacity: 0.94, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduce ? undefined : { opacity: 0, y: -8 }}
                 transition={{ duration: reduce ? 0 : 0.4, ease: textEase }}

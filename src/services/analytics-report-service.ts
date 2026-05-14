@@ -115,15 +115,15 @@ export async function getAnalyticsDashboard(days: number): Promise<AnalyticsDash
       { $group: { _id: "$deviceType", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]),
-    AnalyticsEvent.aggregate<{ _id: string; count: number }>([
+    AnalyticsSession.aggregate<{ _id: string; count: number }>([
       {
         $match: {
-          type: "page_view",
-          occurredAt: { $gte: since },
+          startedAt: { $gte: since },
           country: { $exists: true, $nin: ["", null] },
         },
       },
-      { $group: { _id: "$country", count: { $sum: 1 } } },
+      { $group: { _id: "$country", visitors: { $addToSet: "$visitorKey" } } },
+      { $project: { _id: 1, count: { $size: "$visitors" } } },
       { $sort: { count: -1 } },
       { $limit: 12 },
     ]),

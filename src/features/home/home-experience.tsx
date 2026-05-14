@@ -12,6 +12,7 @@ import { HomeFeedLoader } from "@/features/home/home-feed-loader";
 import { InspirationSidebar } from "@/features/home/inspiration-sidebar";
 import { images } from "@/config/images";
 import type { HomeEditorialResolved } from "@/services/site-editorial-service";
+import { resolveArticleFeaturedAlt } from "@/lib/image-alt";
 
 function CuratedSection({
   title,
@@ -112,7 +113,7 @@ export function HomeExperience({
           >
             <Image
               src={String(lead.featuredImage || images.heroes.luxeBedroom)}
-              alt={String(lead.title ?? "Featured story")}
+              alt={resolveArticleFeaturedAlt(lead as Record<string, unknown>)}
               fill
               className="object-cover transition duration-700 group-hover:scale-[1.03]"
               sizes="(max-width: 768px) 100vw, 560px"
@@ -244,7 +245,7 @@ export function HomeExperience({
               <div className="relative h-48 w-full">
                 <Image
                   src={cat.image}
-                  alt={`${cat.name} decor ideas and styling guides`}
+                  alt={cat.imageAlt}
                   fill
                   className="object-cover transition duration-500 group-hover:scale-105"
                   sizes="400px"

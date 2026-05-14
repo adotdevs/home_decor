@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { env } from "@/lib/env";
+import { readAdminCredentials } from "@/lib/admin-credentials";
 import { authCookie, signAdminToken } from "@/lib/utils/auth";
 
 export async function POST(req: Request) {
@@ -8,18 +8,21 @@ export async function POST(req: Request) {
     const email = String(body.email || "")
       .trim()
       .toLowerCase();
-    const password = String(body.password || "").trim();
+    const password = String(body.password || "").replace(/\r$/, "").trim();
 
-    const adminEmail = env.ADMIN_EMAIL.trim().toLowerCase();
-
-    if (email !== adminEmail) {
+    const cred = readAdminCredentials();
+    const allowed =
+      email === cred.adminEmail || (!!cred.ownerEmail && email === cred.ownerEmail);
+    if (!allowed) {
       return NextResponse.json({ ok: false }, { status: 401 });
     }
-    if (password !== env.ADMIN_PASSWORD.trim()) {
+    if (password !== cred.adminPassword) {
       return NextResponse.json({ ok: false }, { status: 401 });
     }
 
-    const token = signAdminToken({ email: env.ADMIN_EMAIL.trim(), role: "superadmin" });
+    const tokenEmail =
+      cred.ownerEmail && email === cred.ownerEmail ? cred.ownerRaw! : cred.adminEmailDisplay;
+    const token = signAdminToken({ email: tokenEmail, role: "superadmin" });
     const res = NextResponse.json({ ok: true });
 
     const url = new URL(req.url);

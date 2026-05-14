@@ -3,17 +3,15 @@
 import Image from "next/image";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Save, RefreshCw } from "lucide-react";
+import { ImageAltField } from "@/components/admin/image-alt-field";
+import { adminUploadMedia } from "@/lib/client/admin-media-upload";
+import { resolveSiteOgImageAlt } from "@/lib/image-alt";
 
-async function uploadLibraryImage(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.set("file", file);
-  fd.set("showInGallery", "0");
-  const res = await fetch("/api/media", { method: "POST", body: fd, credentials: "include" });
-  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-  if (!res.ok) throw new Error(data.error || "Upload failed");
-  const url = data.url;
-  if (!url) throw new Error("No image URL returned");
-  return url;
+function shortSiteName(siteTitle: string): string {
+  const t = siteTitle.trim();
+  if (!t) return "Site";
+  const head = t.split(/\s[—–-]\s/)[0]?.trim();
+  return head || t;
 }
 
 type TwitterCard = "summary" | "summary_large_image";
@@ -22,6 +20,7 @@ type SeoForm = {
   siteTitle: string;
   siteDescription: string;
   ogImage: string;
+  ogImageAlt: string;
   twitterCard: TwitterCard;
 };
 
@@ -30,6 +29,7 @@ const DEFAULTS: SeoForm = {
   siteDescription:
     "Editorial home decor inspiration, seasonal room guides, and curated interior ideas for beautifully lived-in homes.",
   ogImage: "/images/assets/general/design-interior-light-room-minimal-items.jpg",
+  ogImageAlt: "",
   twitterCard: "summary_large_image",
 };
 
@@ -177,7 +177,11 @@ export default function AdminSeoPage() {
                   setOgUploadErr("");
                   setOgUploading(true);
                   try {
-                    const url = await uploadLibraryImage(file);
+                    const siteName = shortSiteName(form.siteTitle);
+                    const { url } = await adminUploadMedia(file, {
+                      alt: form.ogImageAlt,
+                      contextTitle: `${siteName} Open Graph image`,
+                    });
                     update("ogImage", url);
                   } catch (err) {
                     setOgUploadErr(err instanceof Error ? err.message : "Upload failed");
@@ -212,17 +216,30 @@ export default function AdminSeoPage() {
                   <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-lg bg-muted">
                     <Image
                       src={form.ogImage}
-                      alt=""
+                      alt={resolveSiteOgImageAlt(form.ogImage, shortSiteName(form.siteTitle), form.ogImageAlt)}
                       fill
                       className="object-cover"
                       sizes="160px"
                       unoptimized={form.ogImage.startsWith("http")}
                     />
                   </div>
-                  <p className="break-all text-xs text-muted-foreground">
-                    Stored path or URL:{" "}
-                    <span className="font-mono text-foreground/90">{form.ogImage}</span>
-                  </p>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <p className="break-all text-xs text-muted-foreground">
+                      Stored path or URL:{" "}
+                      <span className="font-mono text-foreground/90">{form.ogImage}</span>
+                    </p>
+                    <ImageAltField
+                      label="Open Graph image alt"
+                      value={form.ogImageAlt}
+                      onChange={(v) => update("ogImageAlt", v)}
+                      previewSrc={form.ogImage}
+                      autoPreviewContext={{
+                        siteName: shortSiteName(form.siteTitle),
+                        articleTitle: `${shortSiteName(form.siteTitle)} social sharing preview`,
+                      }}
+                      autoPreviewUrl={form.ogImage}
+                    />
+                  </div>
                 </div>
               ) : null}
             </div>

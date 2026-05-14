@@ -17,6 +17,7 @@ export default async function Page() {
       slug: c.slug,
       name: c.name,
       image: String(row?.image ?? "").trim(),
+      imageAlt: String((row as { imageAlt?: string })?.imageAlt ?? "").trim(),
     };
   });
 

@@ -20,6 +20,8 @@ const SiteSettingsSchema = new Schema(
     /** Canonical public URL (no trailing slash). Falls back to env when empty. */
     publicUrl: { type: String, default: "" },
     ogImage: { type: String, default: "" },
+    ogImageAlt: { type: String, default: "" },
+    ogImageAutoAlt: { type: String, default: "" },
     seasonalItems: { type: [SeasonalItemSchema], default: [] },
   },
   { timestamps: true },

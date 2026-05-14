@@ -3,26 +3,34 @@
  *   npx tsx src/scripts/ensure-indexes.ts
  */
 import { connectDb } from "@/lib/db";
+import { AdminAuditLog } from "@/models/AdminAuditLog";
 import { Article } from "@/models/Article";
+import { Analytics } from "@/models/Analytics";
+import { AnalyticsSnapshot } from "@/models/AnalyticsSnapshot";
 import { AnalyticsSession } from "@/models/AnalyticsSession";
 import { AnalyticsEvent } from "@/models/AnalyticsEvent";
+import { RetentionCleanupRun } from "@/models/RetentionCleanupRun";
 import { SearchQuery } from "@/models/SearchQuery";
 import { ArticleReview } from "@/models/ArticleReview";
 import { ReviewHelpfulVote } from "@/models/ReviewHelpfulVote";
 import { ReviewRateLimit } from "@/models/ReviewRateLimit";
+import { Visitor } from "@/models/Visitor";
 
 async function main() {
   await connectDb();
   await Article.syncIndexes();
   await AnalyticsSession.syncIndexes();
   await AnalyticsEvent.syncIndexes();
+  await Analytics.syncIndexes();
+  await Visitor.syncIndexes();
   await SearchQuery.syncIndexes();
   await ArticleReview.syncIndexes();
   await ReviewHelpfulVote.syncIndexes();
   await ReviewRateLimit.syncIndexes();
-  console.log(
-    "Indexes synced (Article, AnalyticsSession, AnalyticsEvent, SearchQuery, ArticleReview, ReviewHelpfulVote, ReviewRateLimit).",
-  );
+  await AdminAuditLog.syncIndexes();
+  await AnalyticsSnapshot.syncIndexes();
+  await RetentionCleanupRun.syncIndexes();
+  console.log("Indexes synced (incl. retention-related collections).");
   process.exit(0);
 }
 

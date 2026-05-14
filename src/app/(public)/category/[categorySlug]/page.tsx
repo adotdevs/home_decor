@@ -6,7 +6,7 @@ import { Article } from "@/models/Article";
 import { ArticleCard } from "@/components/article/article-card";
 import { categoryTree } from "@/config/site";
 import { buildMetadata } from "@/lib/utils/seo";
-import { resolveCategoryHubEditorial, resolveCategoryHeroImage } from "@/services/category-service";
+import { resolveCategoryHubEditorial, resolveCategoryHeroVisual } from "@/services/category-service";
 import { getResolvedSiteBranding } from "@/services/site-settings-service";
 import { editorsChoiceArticlesForCategory } from "@/services/article-service";
 import { getHomeEditorialResolved } from "@/services/site-editorial-service";
@@ -34,9 +34,9 @@ export async function generateMetadata({ params }: Props) {
 export default async function CategoryPage({ params }: Props) {
   const { categorySlug } = await params;
   const tree = categoryTree.find((c) => c.slug === categorySlug);
-  const [editorial, heroImage, editorsFirstReads, siteCopy] = await Promise.all([
+  const [editorial, hero, editorsFirstReads, siteCopy] = await Promise.all([
     resolveCategoryHubEditorial(categorySlug),
-    resolveCategoryHeroImage(categorySlug),
+    resolveCategoryHeroVisual(categorySlug),
     editorsChoiceArticlesForCategory(categorySlug, 3),
     getHomeEditorialResolved(),
   ]);
@@ -79,12 +79,12 @@ export default async function CategoryPage({ params }: Props) {
         </div>
         <div className="relative min-h-72 overflow-hidden rounded-2xl">
           <Image
-            src={heroImage}
-            alt={`${pretty(categorySlug)} decor ideas with editorial styling inspiration`}
+            src={hero.src}
+            alt={hero.alt}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 420px"
-            unoptimized={heroImage.startsWith("http")}
+            unoptimized={hero.src.startsWith("http")}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         </div>

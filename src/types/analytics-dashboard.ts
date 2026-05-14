@@ -19,6 +19,7 @@ export type AnalyticsDashboard = {
   topReferrers: { host: string; count: number }[];
   topTrafficSources: { source: string; count: number }[];
   devices: { device: string; count: number }[];
+  /** Unique visitors (distinct visitorKey) per country from sessions in period */
   countries: { country: string; count: number }[];
   series: { date: string; pageViews: number; sessions: number; clicks: number }[];
   topPagesByCtr: { path: string; ctrPct: number; views: number; clicks: number }[];

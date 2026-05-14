@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { editorialEase } from "@/styles/motion";
+import { resolveArticleFeaturedAlt } from "@/lib/image-alt";
 
 export function AutoMoodRail({
   title,
@@ -37,10 +38,9 @@ export function AutoMoodRail({
       </div>
       <motion.div
         key={String(a.slug)}
-        initial={reduce ? false : { opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.55, ease: editorialEase }}
+        initial={reduce ? false : { opacity: 0.92, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduce ? 0 : 0.55, ease: editorialEase }}
         className="mt-8"
       >
         <Link
@@ -50,7 +50,7 @@ export function AutoMoodRail({
           <div className="relative aspect-[16/9] w-full md:aspect-[21/9]">
             <Image
               src={String(a.featuredImage || "/images/heroes/editorial-living.jpg")}
-              alt={String(a.title)}
+              alt={resolveArticleFeaturedAlt(a)}
               fill
               className="object-cover transition duration-[1.2s] ease-out group-hover:scale-[1.03]"
               sizes="100vw"

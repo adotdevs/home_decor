@@ -11,12 +11,14 @@ import {
 } from "@/config/site-defaults";
 import { connectDb } from "@/lib/db";
 import { SiteSettings } from "@/models/SiteSettings";
+import { buildAutoImageAlt, extractFilenameStem, sanitizeAltText, resolveSiteOgImageAlt } from "@/lib/image-alt";
 
 export type ResolvedSiteBranding = {
   name: string;
   description: string;
   url: string;
   ogImage: string;
+  ogImageAlt: string;
 };
 
 export type SeasonalInspirationItem = DefaultSeasonalItem;
@@ -45,13 +47,25 @@ export const getResolvedSiteBranding = cache(async (): Promise<ResolvedSiteBrand
         description?: string;
         publicUrl?: string;
         ogImage?: string;
+        ogImageAlt?: string;
+        ogImageAutoAlt?: string;
       };
       const url = String(d.publicUrl ?? "").trim() || getEnvPublicSiteUrl();
+      const name = String(d.name ?? "").trim() || DEFAULT_SITE_NAME;
+      const ogImage = String(d.ogImage ?? "").trim() || DEFAULT_OG_IMAGE;
+      const ogAuto =
+        String(d.ogImageAutoAlt ?? "").trim() ||
+        buildAutoImageAlt(
+          { siteName: name, articleTitle: `${name} — editorial home decor social preview` },
+          ogImage,
+        );
+      const ogImageAlt = resolveSiteOgImageAlt(ogImage, name, d.ogImageAlt, ogAuto);
       return {
-        name: String(d.name ?? "").trim() || DEFAULT_SITE_NAME,
+        name,
         description: String(d.description ?? "").trim() || DEFAULT_SITE_DESCRIPTION,
         url,
-        ogImage: String(d.ogImage ?? "").trim() || DEFAULT_OG_IMAGE,
+        ogImage,
+        ogImageAlt,
       };
     }
   } catch {
@@ -62,6 +76,7 @@ export const getResolvedSiteBranding = cache(async (): Promise<ResolvedSiteBrand
     description: DEFAULT_SITE_DESCRIPTION,
     url: getEnvPublicSiteUrl(),
     ogImage: DEFAULT_OG_IMAGE,
+    ogImageAlt: resolveSiteOgImageAlt(DEFAULT_OG_IMAGE, DEFAULT_SITE_NAME),
   };
 });
 
@@ -89,6 +104,7 @@ export type SiteSettingsPayload = {
   description: string;
   publicUrl: string;
   ogImage: string;
+  ogImageAlt: string;
   seasonalItems: SeasonalInspirationItem[];
 };
 
@@ -102,6 +118,7 @@ export async function getSiteSettingsForAdmin(): Promise<SiteSettingsPayload> {
         description?: string;
         publicUrl?: string;
         ogImage?: string;
+        ogImageAlt?: string;
         seasonalItems?: Partial<DefaultSeasonalItem>[];
       };
       const items: SeasonalInspirationItem[] = [];
@@ -111,11 +128,14 @@ export async function getSiteSettingsForAdmin(): Promise<SiteSettingsPayload> {
           if (n) items.push(n);
         });
       }
+      const nm = String(d.name ?? "").trim() || DEFAULT_SITE_NAME;
+      const ogImage = String(d.ogImage ?? "").trim() || DEFAULT_OG_IMAGE;
       return {
-        name: String(d.name ?? "").trim() || DEFAULT_SITE_NAME,
+        name: nm,
         description: String(d.description ?? "").trim() || DEFAULT_SITE_DESCRIPTION,
         publicUrl: String(d.publicUrl ?? "").trim(),
-        ogImage: String(d.ogImage ?? "").trim() || DEFAULT_OG_IMAGE,
+        ogImage,
+        ogImageAlt: String(d.ogImageAlt ?? "").trim(),
         seasonalItems: items.length ? items : [...DEFAULT_SEASONAL_ITEMS],
       };
     }
@@ -127,6 +147,7 @@ export async function getSiteSettingsForAdmin(): Promise<SiteSettingsPayload> {
     description: DEFAULT_SITE_DESCRIPTION,
     publicUrl: "",
     ogImage: DEFAULT_OG_IMAGE,
+    ogImageAlt: "",
     seasonalItems: [...DEFAULT_SEASONAL_ITEMS],
   };
 }
@@ -144,6 +165,11 @@ export async function upsertSiteSettingsFromAdmin(body: unknown): Promise<SiteSe
   const description = clampStr(o.description, 2000) || DEFAULT_SITE_DESCRIPTION;
   const publicUrlStored = clampStr(o.publicUrl, 512).replace(/\/$/, "");
   const ogImage = clampStr(o.ogImage, 4096) || DEFAULT_OG_IMAGE;
+  const ogImageAltManual = sanitizeAltText(String(o.ogImageAlt ?? ""));
+  const ogImageAutoAlt = buildAutoImageAlt(
+    { siteName: name, articleTitle: `${name} social sharing preview`, filenameHint: extractFilenameStem(ogImage) },
+    ogImage,
+  );
 
   const rawItems = o.seasonalItems;
   const seasonalItems: SeasonalInspirationItem[] = [];
@@ -165,6 +191,8 @@ export async function upsertSiteSettingsFromAdmin(body: unknown): Promise<SiteSe
       description,
       publicUrl: publicUrlStored,
       ogImage,
+      ogImageAlt: ogImageAltManual,
+      ogImageAutoAlt,
       seasonalItems: finalSeasonal,
     },
     { upsert: true, new: true },
@@ -175,6 +203,7 @@ export async function upsertSiteSettingsFromAdmin(body: unknown): Promise<SiteSe
     description,
     publicUrl: publicUrlStored,
     ogImage,
+    ogImageAlt: ogImageAltManual,
     seasonalItems: finalSeasonal,
   };
 }
@@ -190,6 +219,7 @@ export async function seedSiteSettingsIfEmpty(defaults: SiteSettingsPayload): Pr
     description: defaults.description,
     publicUrl: defaults.publicUrl,
     ogImage: defaults.ogImage,
+    ogImageAlt: defaults.ogImageAlt ?? "",
     seasonalItems: defaults.seasonalItems,
   });
 }

@@ -17,6 +17,8 @@ const CategorySchema = new Schema(
     parentSlug: { type: String, index: true, default: null },
     description: String,
     image: String,
+    imageAlt: { type: String, default: "" },
+    imageAutoAlt: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
     seoTitle: String,
     seoDescription: String,

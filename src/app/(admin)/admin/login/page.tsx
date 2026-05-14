@@ -11,8 +11,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    if (!trimmedEmail || !trimmedPassword) {
+    if (!trimmedEmail || !password) {
       setError("Enter both email and password.");
       return;
     }
@@ -24,7 +23,7 @@ export default function LoginPage() {
         credentials: "same-origin",
         body: JSON.stringify({
           email: trimmedEmail,
-          password: trimmedPassword,
+          password,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -32,7 +31,7 @@ export default function LoginPage() {
         setError(
           res.status === 500
             ? "Server error while signing in. Check server logs."
-            : "Invalid credentials (check ADMIN_EMAIL / ADMIN_PASSWORD in .env.local).",
+            : "Invalid email or password. Use ADMIN_EMAIL or PLATFORM_OWNER_EMAIL; both accounts use the same ADMIN_PASSWORD. Restart dev after editing .env.local.",
         );
         return;
       }
@@ -52,7 +51,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md px-4 py-16 md:py-24">
       <h1 className="font-heading text-4xl text-foreground">Admin Login</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Sign in with your admin email and password.
+      Sign in with your admin email and password.
       </p>
       <form noValidate onSubmit={onSubmit} className="mt-8 space-y-4">
         <div>

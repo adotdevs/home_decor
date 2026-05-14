@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { RevealOnScroll } from "@/components/motion/reveal-on-scroll";
+import { viewportPresets } from "@/lib/motion/presets";
 import { ArticleRatingBadge } from "@/components/reviews/article-rating-badge";
-
-const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
+import { editorialEase } from "@/styles/motion";
+import { resolveArticleFeaturedAlt } from "@/lib/image-alt";
 
 export function FeaturedRail({ articles }: { articles: Array<Record<string, unknown>> }) {
   const reduce = useReducedMotion();
@@ -17,12 +19,13 @@ export function FeaturedRail({ articles }: { articles: Array<Record<string, unkn
       style={{ scrollPaddingInline: "1rem" }}
     >
       {articles.slice(0, 6).map((a, i) => (
-        <motion.div
+        <RevealOnScroll
           key={String(a.slug)}
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "0px 0px -60px 0px", amount: 0.15 }}
-          transition={{ duration: 0.68, delay: reduce ? 0 : i * 0.045, ease }}
+          viewportMargin={viewportPresets.rail}
+          viewportAmount={0.01}
+          delay={reduce ? 0 : i * 0.045}
+          duration={0.68}
+          transition={{ ease: editorialEase }}
           className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center sm:w-[min(22rem,calc(100vw-3rem))] md:w-[340px]"
         >
           <Link
@@ -32,7 +35,7 @@ export function FeaturedRail({ articles }: { articles: Array<Record<string, unkn
             <div className="relative aspect-[4/3] w-full">
               <Image
                 src={String(a.featuredImage || "/images/heroes/editorial-living.jpg")}
-                alt={String(a.title)}
+                alt={resolveArticleFeaturedAlt(a)}
                 fill
                 className="object-cover transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                 sizes="340px"
@@ -51,7 +54,7 @@ export function FeaturedRail({ articles }: { articles: Array<Record<string, unkn
               </p>
             </div>
           </Link>
-        </motion.div>
+        </RevealOnScroll>
       ))}
     </div>
   );

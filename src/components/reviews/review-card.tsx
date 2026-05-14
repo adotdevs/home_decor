@@ -31,8 +31,8 @@ export function ReviewCard({
   return (
     <motion.article
       layout
-      initial={reduce ? false : { opacity: 0, y: 14 }}
-      animate={reduce ? undefined : { opacity: 1, y: 0 }}
+      initial={reduce ? false : { opacity: 0.94, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         "group relative overflow-hidden rounded-3xl border border-white/60 bg-gradient-to-br from-white/90 via-white/70 to-white/40 p-6 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.15)] backdrop-blur-xl dark:border-white/[0.08] dark:from-white/[0.07] dark:via-white/[0.04] dark:to-transparent dark:shadow-[0_12px_40px_-16px_rgba(0,0,0,0.5)]",

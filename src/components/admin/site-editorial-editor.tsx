@@ -6,6 +6,9 @@ import type { HeroSlideConfig } from "@/config/home-editorial-defaults";
 import { shopTheLook } from "@/config/curations";
 import type { HomeEditorialResolved, ShopTheLookItem } from "@/services/site-editorial-service";
 import { categoryTree } from "@/config/site";
+import { ImageAltField } from "@/components/admin/image-alt-field";
+import { adminUploadMedia } from "@/lib/client/admin-media-upload";
+import { resolveHeroSlideAlt, resolveShopTheLookImageAlt } from "@/lib/image-alt";
 
 /** Accepts one slug per line, or full URLs containing /article/… */
 function linesToArticleSlugs(raw: string): string[] {
@@ -47,23 +50,13 @@ function defaultShopTheLookRows(): ShopTheLookItem[] {
     caption: x.caption,
     href: x.href,
     image: x.image,
+    imageAlt: "",
+    imageAutoAlt: "",
   }));
 }
 
 function emptyShopTheLookItem(): ShopTheLookItem {
-  return { title: "", caption: "", href: "/", image: "" };
-}
-
-async function uploadLibraryImage(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.set("file", file);
-  fd.set("showInGallery", "0");
-  const res = await fetch("/api/media", { method: "POST", body: fd, credentials: "include" });
-  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-  if (!res.ok) throw new Error(data.error || "Upload failed");
-  const url = data.url;
-  if (!url) throw new Error("No image URL returned");
-  return url;
+  return { title: "", caption: "", href: "/", image: "", imageAlt: "", imageAutoAlt: "" };
 }
 
 function SettingsCard({
@@ -149,7 +142,11 @@ function BannerLinkPicker({ href, onChange }: { href: string; onChange: (h: stri
 export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolved }) {
   const [heroSlides, setHeroSlides] = useState<HeroSlideConfig[]>(() => initial.heroSlides.map((s) => ({ ...s })));
   const [shopTheLookItems, setShopTheLookItems] = useState<ShopTheLookItem[]>(() =>
-    initial.shopTheLookItems.map((x) => ({ ...x })),
+    initial.shopTheLookItems.map((x) => ({
+      ...x,
+      imageAlt: x.imageAlt ?? "",
+      imageAutoAlt: x.imageAutoAlt ?? "",
+    })),
   );
   const [leadStorySlug, setLeadStorySlug] = useState(initial.leadStorySlug);
   const [featuredWeeklySlugs, setFeaturedWeeklySlugs] = useState(initial.featuredWeeklySlugs.join("\n"));
@@ -204,35 +201,49 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
     [],
   );
 
-  const runUpload = useCallback(async (slideIndex: number, file: File | undefined) => {
-    if (!file) return;
-    setUploadBusyIndex(slideIndex);
-    setMsg(null);
-    try {
-      const url = await uploadLibraryImage(file);
-      setHeroSlides((rows) => rows.map((r, j) => (j === slideIndex ? { ...r, src: url } : r)));
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Could not upload image");
-    } finally {
-      setUploadBusyIndex(null);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }, []);
+  const runUpload = useCallback(
+    async (slideIndex: number, file: File | undefined) => {
+      if (!file) return;
+      setUploadBusyIndex(slideIndex);
+      setMsg(null);
+      try {
+        const slide = heroSlides[slideIndex];
+        const { url } = await adminUploadMedia(file, {
+          alt: slide?.alt,
+          contextTitle: [slide?.headline, slide?.kicker].filter(Boolean).join(" — ") || "Homepage banner",
+        });
+        setHeroSlides((rows) => rows.map((r, j) => (j === slideIndex ? { ...r, src: url } : r)));
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "Could not upload image");
+      } finally {
+        setUploadBusyIndex(null);
+        if (fileRef.current) fileRef.current.value = "";
+      }
+    },
+    [heroSlides],
+  );
 
-  const runStlUpload = useCallback(async (rowIndex: number, file: File | undefined) => {
-    if (!file) return;
-    setStlUploadBusyIndex(rowIndex);
-    setMsg(null);
-    try {
-      const url = await uploadLibraryImage(file);
-      setShopTheLookItems((rows) => rows.map((r, j) => (j === rowIndex ? { ...r, image: url } : r)));
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Could not upload image");
-    } finally {
-      setStlUploadBusyIndex(null);
-      if (stlFileRef.current) stlFileRef.current.value = "";
-    }
-  }, []);
+  const runStlUpload = useCallback(
+    async (rowIndex: number, file: File | undefined) => {
+      if (!file) return;
+      setStlUploadBusyIndex(rowIndex);
+      setMsg(null);
+      try {
+        const row = shopTheLookItems[rowIndex];
+        const { url } = await adminUploadMedia(file, {
+          alt: row?.imageAlt,
+          contextTitle: row?.title || "Shop the look card",
+        });
+        setShopTheLookItems((rows) => rows.map((r, j) => (j === rowIndex ? { ...r, image: url } : r)));
+      } catch (e) {
+        setMsg(e instanceof Error ? e.message : "Could not upload image");
+      } finally {
+        setStlUploadBusyIndex(null);
+        if (stlFileRef.current) stlFileRef.current.value = "";
+      }
+    },
+    [shopTheLookItems],
+  );
 
   async function save() {
     const cleanedSlides = heroSlides.filter((s) => s.src.trim());
@@ -387,7 +398,7 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
                 <div className="space-y-2">
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted">
                     {s.src ? (
-                      <Image src={s.src} alt="" fill className="object-cover" sizes="220px" />
+                      <Image src={s.src} alt={s.src ? resolveHeroSlideAlt(s) : "Slide preview"} fill className="object-cover" sizes="220px" />
                     ) : (
                       <div className="flex h-full items-center justify-center p-4 text-center text-xs text-muted-foreground">
                         No photo yet
@@ -441,15 +452,18 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
                       onChange={(e) => updateSlide(i, { detail: e.target.value })}
                     />
                   </label>
-                  <label className="block sm:col-span-2">
-                    <span className="text-sm font-medium">Describe the photo (for accessibility)</span>
-                    <input
-                      className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
-                      value={s.alt}
-                      onChange={(e) => updateSlide(i, { alt: e.target.value })}
-                      placeholder="Briefly what’s in the image"
-                    />
-                  </label>
+                  <ImageAltField
+                    label="Photo alt text (SEO, Pinterest & screen readers)"
+                    value={s.alt}
+                    onChange={(v) => updateSlide(i, { alt: v })}
+                    previewSrc={s.src || undefined}
+                    autoPreviewContext={{
+                      slideHeadline: s.headline,
+                      slideKicker: s.kicker,
+                      slideDek: s.dek,
+                    }}
+                    autoPreviewUrl={s.src || undefined}
+                  />
                   <div className="sm:col-span-2">
                     <BannerLinkPicker href={s.href} onChange={(h) => updateSlide(i, { href: h })} />
                   </div>
@@ -509,7 +523,7 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
                     {row.image ? (
                       <Image
                         src={row.image}
-                        alt=""
+                        alt={row.image ? resolveShopTheLookImageAlt(row) : "Card preview"}
                         fill
                         className="object-cover"
                         sizes="220px"
@@ -549,6 +563,14 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
                       onChange={(e) => updateShopItem(i, { caption: e.target.value })}
                     />
                   </label>
+                  <ImageAltField
+                    label="Photo alt text"
+                    value={row.imageAlt ?? ""}
+                    onChange={(v) => updateShopItem(i, { imageAlt: v })}
+                    previewSrc={row.image || undefined}
+                    autoPreviewContext={{ cardTitle: row.title, cardCaption: row.caption }}
+                    autoPreviewUrl={row.image || undefined}
+                  />
                   <BannerLinkPicker href={row.href} onChange={(h) => updateShopItem(i, { href: h })} />
                 </div>
               </div>

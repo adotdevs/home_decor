@@ -31,9 +31,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ slug: string 
     imageVal === null || imageVal === undefined
       ? null
       : String(imageVal).trim() || null;
+  const imageAlt = o.imageAlt != null ? String(o.imageAlt) : undefined;
 
   try {
-    await setTopLevelCategoryCardImage(slug, image);
+    await setTopLevelCategoryCardImage(slug, image, { imageAlt });
     return NextResponse.json({ ok: true, slug, image: image ?? "" });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Update failed";

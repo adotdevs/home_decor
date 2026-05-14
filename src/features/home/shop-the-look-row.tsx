@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ShopTheLookItem } from "@/services/site-editorial-service";
+import { resolveShopTheLookImageAlt } from "@/lib/image-alt";
 
 export function ShopTheLookRow({ items }: { items: ShopTheLookItem[] }) {
   const list = items.length ? items : [];
@@ -29,7 +30,7 @@ export function ShopTheLookRow({ items }: { items: ShopTheLookItem[] }) {
             <div className="relative aspect-[4/3] w-full">
               <Image
                 src={item.image}
-                alt={item.title}
+                alt={resolveShopTheLookImageAlt(item)}
                 fill
                 className="object-cover transition duration-700 group-hover:scale-105"
                 sizes="300px"

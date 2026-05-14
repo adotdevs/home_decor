@@ -1,9 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-
-const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
+import { useReducedMotion } from "framer-motion";
+import { RevealOnScroll } from "@/components/motion/reveal-on-scroll";
+import { editorialEase } from "@/styles/motion";
 
 export function MotionSurface({
   children,
@@ -21,19 +21,17 @@ export function MotionSurface({
   const reduce = useReducedMotion();
 
   return (
-    <motion.div
+    <RevealOnScroll
       className={className}
-      initial={reduce ? false : { opacity: 0, y: 12 }}
-      whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px -72px 0px", amount: 0.12 }}
-      transition={{ duration: 0.72, delay: reduce ? 0 : delay, ease }}
+      delay={delay}
+      duration={0.72}
       whileHover={
         reduce || !hoverLift
           ? undefined
-          : { y: -2, boxShadow: hoverShadow, transition: { duration: 0.35, ease } }
+          : { y: -2, boxShadow: hoverShadow, transition: { duration: 0.35, ease: editorialEase } }
       }
     >
       {children}
-    </motion.div>
+    </RevealOnScroll>
   );
 }

@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/utils/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { isPlatformOwnerEmail } from "@/lib/utils/platform-owner";
 
 export default async function AdminLayout({
   children,
@@ -19,5 +20,7 @@ export default async function AdminLayout({
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/login");
 
-  return <AdminShell>{children}</AdminShell>;
+  const showOwnerNav = isPlatformOwnerEmail(admin.email);
+
+  return <AdminShell showOwnerNav={showOwnerNav}>{children}</AdminShell>;
 }

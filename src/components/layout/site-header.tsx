@@ -277,7 +277,7 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                       {nav.map(([label, href], i) => (
                         <motion.div
                           key={href}
-                          initial={reduce ? false : { opacity: 0, x: 12 }}
+                          initial={reduce ? false : { opacity: 0.92, x: 12 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{
                             delay: reduce ? 0 : 0.05 + i * 0.035,

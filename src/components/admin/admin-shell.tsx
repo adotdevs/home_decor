@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
-const links: [string, string][] = [
+const baseLinks: [string, string][] = [
   ["Dashboard", "/admin"],
   ["Site & seasons", "/admin/site"],
   ["Homepage & featured", "/admin/homepage"],
@@ -23,31 +23,44 @@ const links: [string, string][] = [
   ["Users", "/admin/users"],
 ];
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+const ownerLinks: [string, string][] = [["Data & retention", "/admin/owner/retention"]];
+
+function NavLinks({ showOwnerNav, onNavigate }: { showOwnerNav: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
+
+  function row(label: string, href: string) {
+    const active =
+      href === "/admin"
+        ? pathname === "/admin" || pathname === "/admin/"
+        : pathname === href || pathname.startsWith(`${href}/`);
+    return (
+      <Link
+        key={href}
+        href={href}
+        onClick={onNavigate}
+        className={`block cursor-pointer rounded-lg px-3 py-2 transition ${
+          active ? "bg-primary/10 font-medium text-primary" : "text-foreground/90 hover:bg-muted hover:text-foreground"
+        }`}
+      >
+        {label}
+      </Link>
+    );
+  }
+
   return (
     <nav className="space-y-1 text-sm">
-      {links.map(([label, href]) => {
-        const active =
-          href === "/admin" ? pathname === "/admin" || pathname === "/admin/" : pathname === href || pathname.startsWith(`${href}/`);
-        return (
-          <Link
-            key={href}
-            href={href}
-            onClick={onNavigate}
-            className={`block cursor-pointer rounded-lg px-3 py-2 transition ${
-              active ? "bg-primary/10 font-medium text-primary" : "text-foreground/90 hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            {label}
-          </Link>
-        );
-      })}
+      {baseLinks.map(([label, href]) => row(label, href))}
+      {showOwnerNav ? (
+        <>
+          <p className="mb-2 mt-6 text-xs uppercase tracking-[0.15em] text-muted-foreground">Platform owner</p>
+          {ownerLinks.map(([label, href]) => row(label, href))}
+        </>
+      ) : null}
     </nav>
   );
 }
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export function AdminShell({ children, showOwnerNav = false }: { children: React.ReactNode; showOwnerNav?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -98,7 +111,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         >
           <p className="mb-4 hidden text-xs uppercase tracking-[0.15em] text-muted-foreground md:block">Admin</p>
           <p className="mb-4 text-xs uppercase tracking-[0.15em] text-muted-foreground md:hidden">Menu</p>
-          <NavLinks onNavigate={() => setOpen(false)} />
+          <NavLinks showOwnerNav={showOwnerNav} onNavigate={() => setOpen(false)} />
         </aside>
 
         <main className="min-w-0 focus:outline-none md:pt-0">{children}</main>

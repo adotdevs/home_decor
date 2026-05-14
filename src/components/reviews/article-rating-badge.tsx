@@ -30,8 +30,8 @@ export function ArticleRatingBadge({
         dense && "gap-1 px-1.5 py-0",
         className,
       )}
-      initial={reduce ? false : { opacity: 0, y: 4 }}
-      animate={reduce ? undefined : { opacity: 1, y: 0 }}
+      initial={reduce ? false : { opacity: 0.94, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
       <span className="flex items-center gap-0.5 text-amber-500">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArticleRatingBadge } from "@/components/reviews/article-rating-badge";
+import { resolveArticleFeaturedAlt } from "@/lib/image-alt";
 
 export function RelatedArticlesRail({
   articles,
@@ -20,7 +21,7 @@ export function RelatedArticlesRail({
               <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-xl">
                 <Image
                   src={String(a.featuredImage || "/images/heroes/editorial-living.jpg")}
-                  alt={String(a.title)}
+                  alt={resolveArticleFeaturedAlt(a)}
                   fill
                   className="object-cover transition duration-300 group-hover:scale-105"
                   sizes="80px"

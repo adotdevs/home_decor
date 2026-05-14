@@ -22,6 +22,7 @@ async function run() {
     description: DEFAULT_SITE_DESCRIPTION,
     publicUrl: "",
     ogImage: DEFAULT_OG_IMAGE,
+    ogImageAlt: "",
     seasonalItems: [...DEFAULT_SEASONAL_ITEMS],
   });
 

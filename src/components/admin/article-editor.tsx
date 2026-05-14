@@ -6,10 +6,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { categoryTree } from "@/config/site";
 import { DeleteArticleButton } from "@/components/admin/delete-article-button";
+import { ImageAltField } from "@/components/admin/image-alt-field";
 import { parseExcludeFromTrendingFlag } from "@/lib/utils/exclude-from-trending";
+import { adminUploadMedia } from "@/lib/client/admin-media-upload";
+import type { ImageAltContext } from "@/lib/image-alt";
 
 type ContentBlock = { type: string; content: string; level?: number; alt?: string };
-type MediaUploadResponse = { url?: string; alt?: string; error?: string };
 
 type BlockType = "paragraph" | "heading" | "image" | "quote" | "list";
 
@@ -46,6 +48,7 @@ export type ArticleEditorInitial = {
   internalLinks?: string[];
   faq?: { question?: string; answer?: string }[];
   views?: number;
+  featuredImageAlt?: string;
 };
 
 type FaqRow = { key: string; question: string; answer: string };
@@ -110,6 +113,7 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
   const [slug, setSlug] = useState(initial?.slug || "");
   const [excerpt, setExcerpt] = useState(initial?.excerpt || "");
   const [featuredImage, setFeaturedImage] = useState(initial?.featuredImage || "");
+  const [featuredImageAlt, setFeaturedImageAlt] = useState(initial?.featuredImageAlt || "");
   const [categorySlug, setCategorySlug] = useState(initial?.categorySlug || categoryTree[0]?.slug || "bedroom");
   const [subcategorySlug, setSubcategorySlug] = useState(initial?.subcategorySlug || "");
   const [tags, setTags] = useState((initial?.tags || []).join(", "));
@@ -148,6 +152,17 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
 
   const persistedSlug = mode === "edit" && initial?.slug ? String(initial.slug) : "";
 
+  const heroAltContext: ImageAltContext = useMemo(
+    () => ({
+      articleTitle: title.trim(),
+      categorySlug,
+      subcategorySlug: (subcategorySlug || subs[0] || "").trim(),
+      excerptSnippet: excerpt.slice(0, 220),
+      focusKeyword: focusKeyword.trim(),
+    }),
+    [title, categorySlug, subcategorySlug, subs, excerpt, focusKeyword],
+  );
+
   async function postArticle(body: Record<string, unknown>) {
     const res = await fetch("/api/articles", {
       method: "POST",
@@ -169,25 +184,16 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
     return data;
   }
 
-  async function uploadToMedia(file: File): Promise<string> {
-    const fd = new FormData();
-    fd.set("file", file);
-    const res = await fetch("/api/media", { method: "POST", body: fd, credentials: "include" });
-    const data = (await res.json().catch(() => ({}))) as MediaUploadResponse;
-    if (!res.ok) {
-      throw new Error(data.error || "Image upload failed");
-    }
-    if (!data.url) {
-      throw new Error("Upload succeeded but no image URL was returned.");
-    }
-    return data.url;
-  }
-
   async function onHeroUpload(file: File) {
     setHeroUploading(true);
     setHeroUploadError(null);
     try {
-      setFeaturedImage(await uploadToMedia(file));
+      const { url } = await adminUploadMedia(file, {
+        alt: featuredImageAlt,
+        contextTitle: title,
+        contextCategorySlug: categorySlug,
+      });
+      setFeaturedImage(url);
     } catch (e) {
       setHeroUploadError(e instanceof Error ? e.message : "Image upload failed");
     } finally {
@@ -198,7 +204,12 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
   async function onBlockImageUpload(key: string, file: File) {
     setBlockUploadKey(key);
     try {
-      const url = await uploadToMedia(file);
+      const block = blocks.find((b) => b.key === key);
+      const { url } = await adminUploadMedia(file, {
+        alt: block?.alt,
+        contextTitle: title,
+        contextCategorySlug: categorySlug,
+      });
       setBlocks((prev) => prev.map((b) => (b.key === key ? { ...b, content: url } : b)));
     } catch (e) {
       alert(e instanceof Error ? e.message : "Upload failed");
@@ -297,6 +308,7 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
       slug: effectiveSlug,
       excerpt: excerpt.trim(),
       featuredImage: featuredImage.trim() ? featuredImage.trim() : null,
+      featuredImageAlt: featuredImageAlt.trim() || null,
       categorySlug,
       subcategorySlug: sub || undefined,
       tags: tagList,
@@ -376,7 +388,7 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
               <div className="relative aspect-[16/9] w-full border-b">
                 <Image
                   src={featuredImage}
-                  alt={title ? `${title} featured image preview` : "Featured image preview"}
+                  alt={featuredImageAlt.trim() || `${title} featured image preview`}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
@@ -417,6 +429,15 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
                 ) : null}
               </div>
               {heroUploadError ? <p className="text-xs text-destructive">{heroUploadError}</p> : null}
+              <ImageAltField
+                label="Featured image alt text"
+                value={featuredImageAlt}
+                onChange={setFeaturedImageAlt}
+                previewSrc={featuredImage || undefined}
+                autoPreviewContext={heroAltContext}
+                autoPreviewUrl={featuredImage || undefined}
+                className="pt-1"
+              />
             </div>
           </div>
         </div>
@@ -597,7 +618,11 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
                     {b.content ? (
                       <div className="relative max-h-64 w-full overflow-hidden rounded-lg border bg-background">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={b.content} alt="" className="max-h-64 w-full object-contain" />
+                        <img
+                          src={b.content}
+                          alt={b.alt?.trim() || `${title} inline decor image`}
+                          className="max-h-64 w-full object-contain"
+                        />
                       </div>
                     ) : null}
                     <input
@@ -620,11 +645,13 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
                       />
                       {blockUploadKey === b.key ? "Uploading…" : "Upload file"}
                     </label>
-                    <input
-                      className="w-full rounded-lg border bg-background p-2 text-xs"
+                    <ImageAltField
+                      label="Alt text (SEO & accessibility)"
                       value={b.alt || ""}
-                      onChange={(e) => updateBlock(b.key, { alt: e.target.value })}
-                      placeholder="Alt text (SEO & accessibility)"
+                      onChange={(v) => updateBlock(b.key, { alt: v })}
+                      previewSrc={b.content || undefined}
+                      autoPreviewContext={heroAltContext}
+                      autoPreviewUrl={b.content || undefined}
                     />
                   </div>
                 ) : null}

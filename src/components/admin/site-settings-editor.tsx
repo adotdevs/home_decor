@@ -4,16 +4,15 @@ import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
 import type { SiteSettingsPayload } from "@/services/site-settings-service";
 import { DEFAULT_OG_IMAGE, SEASONAL_IMAGE_KEYS, type SeasonalImageKey } from "@/config/site-defaults";
+import { ImageAltField } from "@/components/admin/image-alt-field";
+import { adminUploadMedia } from "@/lib/client/admin-media-upload";
+import { resolveSiteOgImageAlt } from "@/lib/image-alt";
 
-async function uploadLibraryImage(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.set("file", file);
-  fd.set("showInGallery", "0");
-  const res = await fetch("/api/media", { method: "POST", body: fd, credentials: "include" });
-  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-  if (!res.ok) throw new Error(data.error || "Upload failed");
-  const url = data.url;
-  if (!url) throw new Error("No image URL returned");
+async function uploadOgImage(file: File, alt: string, siteName: string): Promise<string> {
+  const { url } = await adminUploadMedia(file, {
+    alt,
+    contextTitle: `${siteName} Open Graph image`,
+  });
   return url;
 }
 
@@ -32,6 +31,7 @@ export function SiteSettingsEditor({ initial }: { initial: SiteSettingsPayload }
   const [description, setDescription] = useState(initial.description);
   const [publicUrl, setPublicUrl] = useState(initial.publicUrl);
   const [ogImage, setOgImage] = useState(initial.ogImage);
+  const [ogImageAlt, setOgImageAlt] = useState(initial.ogImageAlt ?? "");
   const [seasonalItems, setSeasonalItems] = useState(initial.seasonalItems);
   const [status, setStatus] = useState<"idle" | "saving" | "ok" | "err">("idle");
   const [message, setMessage] = useState("");
@@ -47,7 +47,7 @@ export function SiteSettingsEditor({ initial }: { initial: SiteSettingsPayload }
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name, description, publicUrl, ogImage, seasonalItems }),
+        body: JSON.stringify({ name, description, publicUrl, ogImage, ogImageAlt, seasonalItems }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error || "Save failed");
@@ -57,7 +57,7 @@ export function SiteSettingsEditor({ initial }: { initial: SiteSettingsPayload }
       setStatus("err");
       setMessage(e instanceof Error ? e.message : "Save failed");
     }
-  }, [name, description, publicUrl, ogImage, seasonalItems]);
+  }, [name, description, publicUrl, ogImage, ogImageAlt, seasonalItems]);
 
   return (
     <div className="space-y-8">
@@ -107,7 +107,7 @@ export function SiteSettingsEditor({ initial }: { initial: SiteSettingsPayload }
                 setOgUploadErr("");
                 setOgUploading(true);
                 try {
-                  const url = await uploadLibraryImage(file);
+                  const url = await uploadOgImage(file, ogImageAlt, name);
                   setOgImage(url);
                 } catch (err) {
                   setOgUploadErr(err instanceof Error ? err.message : "Upload failed");
@@ -140,11 +140,28 @@ export function SiteSettingsEditor({ initial }: { initial: SiteSettingsPayload }
             {ogImage ? (
               <div className="mt-4 flex items-start gap-4 rounded-lg border bg-muted/30 p-3">
                 <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-md bg-muted">
-                  <Image src={ogImage} alt="" fill className="object-cover" sizes="160px" unoptimized={ogImage.startsWith("http")} />
+                  <Image
+                    src={ogImage}
+                    alt={resolveSiteOgImageAlt(ogImage, name, ogImageAlt)}
+                    fill
+                    className="object-cover"
+                    sizes="160px"
+                    unoptimized={ogImage.startsWith("http")}
+                  />
                 </div>
-                <p className="break-all text-xs text-muted-foreground">
-                  Current file: <span className="font-mono text-foreground/90">{ogImage}</span>
-                </p>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <p className="break-all text-xs text-muted-foreground">
+                    Current file: <span className="font-mono text-foreground/90">{ogImage}</span>
+                  </p>
+                  <ImageAltField
+                    label="Open Graph image alt"
+                    value={ogImageAlt}
+                    onChange={setOgImageAlt}
+                    previewSrc={ogImage}
+                    autoPreviewContext={{ siteName: name, articleTitle: `${name} social sharing preview` }}
+                    autoPreviewUrl={ogImage}
+                  />
+                </div>
               </div>
             ) : null}
           </div>

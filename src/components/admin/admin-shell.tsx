@@ -14,6 +14,7 @@ const links: [string, string][] = [
   ["Analytics", "/admin/analytics"],
   ["Search analytics", "/admin/search-analytics"],
   ["Articles", "/admin/articles"],
+  ["Reviews", "/admin/reviews"],
   ["Create", "/admin/articles/create"],
   ["Categories", "/admin/categories"],
   ["Ads", "/admin/ads"],

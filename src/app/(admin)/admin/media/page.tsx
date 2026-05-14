@@ -92,9 +92,12 @@ export default function Page() {
     <div className="rounded-2xl border bg-card p-6 shadow-sm">
       <h1 className="font-heading text-3xl">Media library</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Upload files for article hero images and inline blocks. Files are stored under{" "}
-        <code className="rounded bg-muted px-1 text-xs">public/uploads</code>. Use the inspiration gallery section below
-        to add images that appear on the public gallery with room filters.
+        Upload files for article hero images and inline blocks. On your machine files go under{" "}
+        <code className="rounded bg-muted px-1 text-xs">public/uploads</code>. On{" "}
+        <strong className="font-medium text-foreground">Vercel</strong>, connect{" "}
+        <strong className="font-medium text-foreground">Blob</strong> storage to this project so{" "}
+        <code className="rounded bg-muted px-1 text-xs">BLOB_READ_WRITE_TOKEN</code> is set. Use the inspiration gallery
+        section below to add images that appear on the public gallery with room filters.
       </p>
 
       <div

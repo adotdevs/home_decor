@@ -8,6 +8,8 @@ import { categoryTree } from "@/config/site";
 import { buildMetadata } from "@/lib/utils/seo";
 import { resolveCategoryHubEditorial, resolveCategoryHeroImage } from "@/services/category-service";
 import { getResolvedSiteBranding } from "@/services/site-settings-service";
+import { editorsChoiceArticlesForCategory } from "@/services/article-service";
+import { getHomeEditorialResolved } from "@/services/site-editorial-service";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +34,17 @@ export async function generateMetadata({ params }: Props) {
 export default async function CategoryPage({ params }: Props) {
   const { categorySlug } = await params;
   const tree = categoryTree.find((c) => c.slug === categorySlug);
-  const [editorial, heroImage] = await Promise.all([
+  const [editorial, heroImage, editorsFirstReads, siteCopy] = await Promise.all([
     resolveCategoryHubEditorial(categorySlug),
     resolveCategoryHeroImage(categorySlug),
+    editorsChoiceArticlesForCategory(categorySlug, 3),
+    getHomeEditorialResolved(),
   ]);
+  const categoryDisplayName = tree?.name ?? pretty(categorySlug);
+  const popularSearchesTitle = siteCopy.categoryPopularSearchesTitle.replace(
+    /\{category\}/gi,
+    categoryDisplayName,
+  );
 
   await connectDb();
   const [dbSubs, dbArticles] = await Promise.all([
@@ -48,7 +57,6 @@ export default async function CategoryPage({ params }: Props) {
       : (tree?.subcategories || []).map((slug) => ({ slug, name: pretty(slug) }));
   const articles =
     (dbArticles as Record<string, unknown>[]).length > 0 ? (dbArticles as Record<string, unknown>[]) : [];
-  const featured = articles.slice(0, 3);
 
   return (
     <div className="mx-auto min-w-0 max-w-7xl px-4 py-10 sm:px-5 md:px-8 md:py-14">
@@ -107,14 +115,25 @@ export default async function CategoryPage({ params }: Props) {
         </div>
       </section>
 
-      {featured.length ? (
+      {editorsFirstReads.length ? (
         <section className="mt-12 rounded-3xl bg-muted/35 p-6 md:p-8">
-          <h2 className="font-heading text-2xl font-semibold">Editor&apos;s first reads</h2>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Start here if you want the strongest combination of visual inspiration and practical styling logic.
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-heading text-2xl font-semibold">Editor&apos;s first reads</h2>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Start here if you want the strongest combination of visual inspiration and practical styling logic — drawn from our
+                site-wide editor&apos;s picks in this category.
+              </p>
+            </div>
+            <Link
+              href="/latest"
+              className="shrink-0 text-sm font-semibold text-primary hover:underline"
+            >
+              Latest from all categories
+            </Link>
+          </div>
           <div className="mt-6 grid min-w-0 gap-6 md:grid-cols-3">
-            {featured.map((a) => (
+            {editorsFirstReads.map((a) => (
               <ArticleCard key={String(a.slug)} article={a as never} />
             ))}
           </div>
@@ -142,7 +161,7 @@ export default async function CategoryPage({ params }: Props) {
 
       <section className="mt-14 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="rounded-3xl border border-border bg-card p-6 md:p-8">
-          <h2 className="font-heading text-2xl font-semibold">Popular searches in this category</h2>
+          <h2 className="font-heading text-2xl font-semibold">{popularSearchesTitle}</h2>
           <div className="mt-5 flex flex-wrap gap-2">
             {editorial.searches.map((search) => (
               <Link

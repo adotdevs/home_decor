@@ -173,6 +173,21 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
   const [sectionMostPinnedTitle, setSectionMostPinnedTitle] = useState(initial.sectionMostPinnedTitle);
   const [sectionMostPinnedDek, setSectionMostPinnedDek] = useState(initial.sectionMostPinnedDek);
   const [sectionFreshEditorsTitle, setSectionFreshEditorsTitle] = useState(initial.sectionFreshEditorsTitle);
+  const [sidebarSeasonalGuidesLabel, setSidebarSeasonalGuidesLabel] = useState(initial.sidebarSeasonalGuidesLabel);
+  const [sidebarNewsletterKicker, setSidebarNewsletterKicker] = useState(initial.sidebarNewsletterKicker);
+  const [sidebarNewsletterTitle, setSidebarNewsletterTitle] = useState(initial.sidebarNewsletterTitle);
+  const [sidebarNewsletterDek, setSidebarNewsletterDek] = useState(initial.sidebarNewsletterDek);
+  const [homepageTrustTitle, setHomepageTrustTitle] = useState(initial.homepageTrustTitle);
+  const [homepageTrustBody, setHomepageTrustBody] = useState(initial.homepageTrustBody);
+  const [relatedStoriesTitle, setRelatedStoriesTitle] = useState(initial.relatedStoriesTitle);
+  const [categoryPopularSearchesTitle, setCategoryPopularSearchesTitle] = useState(
+    initial.categoryPopularSearchesTitle,
+  );
+  const [newsletterReadersSayTitle, setNewsletterReadersSayTitle] = useState(initial.newsletterReadersSayTitle);
+  const [searchIntroEyebrow, setSearchIntroEyebrow] = useState(initial.searchIntroEyebrow);
+  const [searchIntroTitle, setSearchIntroTitle] = useState(initial.searchIntroTitle);
+  const [searchIntroDek, setSearchIntroDek] = useState(initial.searchIntroDek);
+  const [searchTrendingTitle, setSearchTrendingTitle] = useState(initial.searchTrendingTitle);
 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -253,6 +268,19 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
         sectionMostPinnedTitle: sectionMostPinnedTitle.trim(),
         sectionMostPinnedDek: sectionMostPinnedDek.trim(),
         sectionFreshEditorsTitle: sectionFreshEditorsTitle.trim(),
+        sidebarSeasonalGuidesLabel: sidebarSeasonalGuidesLabel.trim(),
+        sidebarNewsletterKicker: sidebarNewsletterKicker.trim(),
+        sidebarNewsletterTitle: sidebarNewsletterTitle.trim(),
+        sidebarNewsletterDek: sidebarNewsletterDek.trim(),
+        homepageTrustTitle: homepageTrustTitle.trim(),
+        homepageTrustBody: homepageTrustBody.trim(),
+        relatedStoriesTitle: relatedStoriesTitle.trim(),
+        categoryPopularSearchesTitle: categoryPopularSearchesTitle.trim(),
+        newsletterReadersSayTitle: newsletterReadersSayTitle.trim(),
+        searchIntroEyebrow: searchIntroEyebrow.trim(),
+        searchIntroTitle: searchIntroTitle.trim(),
+        searchIntroDek: searchIntroDek.trim(),
+        searchTrendingTitle: searchTrendingTitle.trim(),
       };
       const res = await fetch("/api/site-editorial", {
         method: "PATCH",
@@ -725,6 +753,122 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
           value={inspirationPinnedSlugs}
           onChange={setInspirationPinnedSlugs}
         />
+      </SettingsCard>
+
+      <SettingsCard
+        title="Labels & blurbs (site-wide)"
+        intro="These power the homepage sidebar, the article-page rail, category hubs, search intro, newsletter headline, and the trust strip above the footer. Use {siteName} in the trust paragraph and {category} in the category search title."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-medium">Homepage — seasonal sidebar kicker</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={sidebarSeasonalGuidesLabel}
+              onChange={(e) => setSidebarSeasonalGuidesLabel(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium">Homepage sidebar — newsletter kicker</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={sidebarNewsletterKicker}
+              onChange={(e) => setSidebarNewsletterKicker(e.target.value)}
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-sm font-medium">Homepage sidebar — newsletter title</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={sidebarNewsletterTitle}
+              onChange={(e) => setSidebarNewsletterTitle(e.target.value)}
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-sm font-medium">Homepage sidebar — newsletter subtitle</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={sidebarNewsletterDek}
+              onChange={(e) => setSidebarNewsletterDek(e.target.value)}
+            />
+          </label>
+        </div>
+        <label className="block">
+          <span className="text-sm font-medium">Homepage — trust strip title</span>
+          <input
+            className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+            value={homepageTrustTitle}
+            onChange={(e) => setHomepageTrustTitle(e.target.value)}
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium">Homepage — trust strip body ({`{siteName}`} allowed)</span>
+          <textarea
+            className="mt-1.5 min-h-[100px] w-full rounded-xl border border-border bg-background px-3 py-2 text-sm leading-relaxed"
+            value={homepageTrustBody}
+            onChange={(e) => setHomepageTrustBody(e.target.value)}
+          />
+        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-medium">Article page — related rail kicker</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={relatedStoriesTitle}
+              onChange={(e) => setRelatedStoriesTitle(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium">Category hub — popular searches title ({`{category}`} allowed)</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={categoryPopularSearchesTitle}
+              onChange={(e) => setCategoryPopularSearchesTitle(e.target.value)}
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-sm font-medium">Newsletter — readers say heading</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={newsletterReadersSayTitle}
+              onChange={(e) => setNewsletterReadersSayTitle(e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-sm font-medium">Search — eyebrow</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={searchIntroEyebrow}
+              onChange={(e) => setSearchIntroEyebrow(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium">Search — main title</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={searchIntroTitle}
+              onChange={(e) => setSearchIntroTitle(e.target.value)}
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-sm font-medium">Search — intro paragraph</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={searchIntroDek}
+              onChange={(e) => setSearchIntroDek(e.target.value)}
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-sm font-medium">Search — “trending” rail title (empty query)</span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={searchTrendingTitle}
+              onChange={(e) => setSearchTrendingTitle(e.target.value)}
+            />
+          </label>
+        </div>
       </SettingsCard>
 
       <details className="rounded-2xl border border-border bg-card/60 p-5">

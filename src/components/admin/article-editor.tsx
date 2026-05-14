@@ -34,6 +34,8 @@ export type ArticleEditorInitial = {
   scheduledPublishAt?: string | Date | null;
   trendingRank?: number | null;
   excludeFromTrending?: boolean;
+  /** Mirrors SiteEditorial editorsChoiceSlugs — not stored on Article. */
+  inEditorsChoice?: boolean;
   publishedAt?: string | Date | null;
   popularityScore?: number;
   seoTitle?: string;
@@ -120,6 +122,7 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
   const [excludeFromTrending, setExcludeFromTrending] = useState(() =>
     parseExcludeFromTrendingFlag(initial?.excludeFromTrending),
   );
+  const [inEditorsChoice, setInEditorsChoice] = useState(() => Boolean(initial?.inEditorsChoice));
   const [publishedAtLocal, setPublishedAtLocal] = useState(() =>
     mode === "edit" ? toDatetimeLocal(initial?.publishedAt) : "",
   );
@@ -302,6 +305,7 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
       contentBlocks: toPayloadBlocks(blocks),
       trendingRank: trendingRank.trim() === "" ? null : Number(trendingRank),
       excludeFromTrending,
+      inEditorsChoice,
       popularityScore: popularityScore.trim() === "" ? 0 : Number(popularityScore),
       faq: faqPayload,
       internalLinks: internalLinksArr,
@@ -473,6 +477,15 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
             <li>
               <span className="font-medium text-foreground">Inspiration feed & Latest</span> — newest published first. Set{" "}
               <strong>Published at</strong> below to control order without re-saving the article.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Editor&apos;s choice</span> — row on the homepage and{" "}
+              <strong>Editor&apos;s first reads</strong> on matching category hubs (published stories only). Use the checkbox below or
+              manage the list in{" "}
+              <Link href="/admin/homepage" className="text-primary hover:underline">
+                Homepage & featured
+              </Link>
+              .
             </li>
             <li>
               <span className="font-medium text-foreground">Trending</span> — manual rank and engagement score in{" "}
@@ -781,7 +794,8 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
             <Link href="/admin/trending" className="font-medium text-primary hover:underline">
               Trending admin
             </Link>
-            .
+            . Check <strong>Editor&apos;s choice</strong> to surface this story on the homepage rail and on category pages for the same
+            room category (published only).
           </p>
           <div className="mt-3 flex flex-wrap items-end gap-4">
             <label className="block">
@@ -803,6 +817,14 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
                 onChange={(e) => setExcludeFromTrending(e.target.checked)}
               />
               Exclude from trending / most pinned
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={inEditorsChoice}
+                onChange={(e) => setInEditorsChoice(e.target.checked)}
+              />
+              Show in &ldquo;Editor&apos;s choice&rdquo; (homepage + this category when the story matches the category)
             </label>
           </div>
         </div>

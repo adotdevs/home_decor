@@ -1,8 +1,12 @@
+import type { PublicReview, ReviewSort, ReviewSummary } from "@/types/article-review";
 import Link from "next/link";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { ArticleShareRow } from "@/components/article/article-share-row";
 import { ReadingProgress } from "@/components/article/reading-progress";
 import { RelatedArticlesRail } from "@/components/article/related-articles-rail";
+import { ArticleReviewsSection } from "@/components/reviews/article-reviews-section";
+import { ArticleRatingBadge } from "@/components/reviews/article-rating-badge";
+import { StarDisplay } from "@/components/reviews/star-display";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 
 type Block = {
@@ -25,10 +29,21 @@ export function ArticleDetail({
   article,
   related,
   shareBaseUrl,
+  reviewsInitial,
+  relatedRailTitle,
 }: {
   article: Record<string, unknown>;
   related: Array<Record<string, unknown>>;
   shareBaseUrl: string;
+  reviewsInitial: {
+    summary: ReviewSummary;
+    reviews: PublicReview[];
+    total: number;
+    page: number;
+    pages: number;
+    sort: ReviewSort;
+  };
+  relatedRailTitle?: string;
 }) {
   const blocks = (article.contentBlocks || []) as Block[];
   const toc = blocks
@@ -76,6 +91,12 @@ export function ArticleDetail({
               ) : null}
             </div>
             <ArticleShareRow baseUrl={shareBaseUrl} title={String(article.title)} slug={String(article.slug)} />
+            {Number(article.reviewCount ?? 0) > 0 ? (
+              <div className="mt-5 flex flex-wrap items-center gap-4">
+                <ArticleRatingBadge average={Number(article.reviewAverage ?? 0)} count={Number(article.reviewCount ?? 0)} />
+                <StarDisplay rating={Math.round(Number(article.reviewAverage ?? 0))} size="md" />
+              </div>
+            ) : null}
 
             {article.featuredImage ? (
               <figure className="mt-10 overflow-hidden rounded-3xl border border-black/5 shadow-lg">
@@ -184,6 +205,8 @@ export function ArticleDetail({
               </section>
             ) : null}
 
+            <ArticleReviewsSection articleSlug={String(article.slug)} initial={reviewsInitial} />
+
             {Array.isArray(article.internalLinks) && article.internalLinks.length > 0 ? (
               <section className="mt-10">
                 <h2 className="font-heading text-xl font-semibold">Keep exploring</h2>
@@ -208,7 +231,7 @@ export function ArticleDetail({
                   <AdSlot placement="sidebar" />
                 </div>
               </div>
-              <RelatedArticlesRail articles={related} />
+              <RelatedArticlesRail articles={related} title={relatedRailTitle} />
             </div>
           </aside>
         </div>

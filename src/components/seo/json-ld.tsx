@@ -4,10 +4,16 @@ export function JsonLd({ data }: { data: Record<string, unknown> | Array<Record<
   return <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }
 
-export function articleSchema(article: Record<string, unknown>, path: string, ogFallback: string, baseUrl: string) {
+export function articleSchema(
+  article: Record<string, unknown>,
+  path: string,
+  ogFallback: string,
+  baseUrl: string,
+  reviews?: { average: number; count: number; items?: Record<string, unknown>[] },
+) {
   const imgRaw = article.featuredImage as string | undefined;
   const image = imgRaw?.startsWith("http") ? imgRaw : absoluteUrl(imgRaw || ogFallback, baseUrl);
-  return {
+  const out: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.title,
@@ -18,6 +24,20 @@ export function articleSchema(article: Record<string, unknown>, path: string, og
     image,
     mainEntityOfPage: absoluteUrl(path, baseUrl),
   };
+  if (reviews && reviews.count > 0 && reviews.average > 0) {
+    out.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: reviews.average,
+      ratingCount: reviews.count,
+      reviewCount: reviews.count,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+  if (reviews?.items?.length) {
+    out.review = reviews.items;
+  }
+  return out;
 }
 
 export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>, baseUrl: string) {

@@ -37,8 +37,9 @@ const ArticleSchema = new Schema(
     popularityScore: { type: Number, default: 0, index: true },
     /** Lower = higher in trending when set (manual slots). Omit for pure popularity ordering. */
     trendingRank: { type: Number, default: undefined },
-    /** Hide article from /trending and home “most pinned” rail */
-    excludeFromTrending: { type: Boolean, default: false },
+    /** Denormalized from live reviews for fast cards & SEO */
+    reviewAverage: { type: Number, default: 0 },
+    reviewCount: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

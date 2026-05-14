@@ -7,6 +7,28 @@ import type { SiteEditorialConfigLean } from "@/models/SiteEditorialConfig";
 
 const SITE_ID = "site";
 
+const MARKETING_DEFAULTS = {
+  sidebarSeasonalGuidesLabel: "Seasonal guides",
+  sidebarNewsletterKicker: "Newsletter",
+  sidebarNewsletterTitle: "Saturday styling letter",
+  sidebarNewsletterDek: "Room formulas, shopping edits, and quiet-luxury notes — weekly.",
+  homepageTrustTitle: "Built for search, saves, and serious readers",
+  homepageTrustBody:
+    "{siteName} publishes long-form, magazine-quality stories with structured FAQs, rich imagery, and internal links between categories — the kind of depth search engines and Pinterest audiences reward. Our layouts leave room for premium ad experiences without breaking editorial rhythm.",
+  relatedStoriesTitle: "Related stories",
+  categoryPopularSearchesTitle: "Popular searches in {category}",
+  newsletterReadersSayTitle: "What our readers say",
+  searchIntroEyebrow: "Search the library",
+  searchIntroTitle: "Find your next room story",
+  searchIntroDek: "Search articles, tags, and room guides. Use filters to narrow by category or tag.",
+  searchTrendingTitle: "Trending now",
+} as const;
+
+function pickMarketingStr(raw: unknown, fallback: string): string {
+  const s = String(raw ?? "").trim();
+  return s || fallback;
+}
+
 function normalizeSlugList(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((s) => String(s || "").trim()).filter(Boolean);
@@ -93,6 +115,19 @@ export type HomeEditorialResolved = {
   sectionMostPinnedTitle: string;
   sectionMostPinnedDek: string;
   sectionFreshEditorsTitle: string;
+  sidebarSeasonalGuidesLabel: string;
+  sidebarNewsletterKicker: string;
+  sidebarNewsletterTitle: string;
+  sidebarNewsletterDek: string;
+  homepageTrustTitle: string;
+  homepageTrustBody: string;
+  relatedStoriesTitle: string;
+  categoryPopularSearchesTitle: string;
+  newsletterReadersSayTitle: string;
+  searchIntroEyebrow: string;
+  searchIntroTitle: string;
+  searchIntroDek: string;
+  searchTrendingTitle: string;
 };
 
 function mapDocToResolved(d: SiteEditorialConfigLean | Record<string, never>): HomeEditorialResolved {
@@ -121,6 +156,28 @@ function mapDocToResolved(d: SiteEditorialConfigLean | Record<string, never>): H
     sectionMostPinnedTitle: String(d.sectionMostPinnedTitle || "").trim(),
     sectionMostPinnedDek: String(d.sectionMostPinnedDek || "").trim(),
     sectionFreshEditorsTitle: String(d.sectionFreshEditorsTitle || "").trim(),
+    sidebarSeasonalGuidesLabel: pickMarketingStr(
+      d.sidebarSeasonalGuidesLabel,
+      MARKETING_DEFAULTS.sidebarSeasonalGuidesLabel,
+    ),
+    sidebarNewsletterKicker: pickMarketingStr(d.sidebarNewsletterKicker, MARKETING_DEFAULTS.sidebarNewsletterKicker),
+    sidebarNewsletterTitle: pickMarketingStr(d.sidebarNewsletterTitle, MARKETING_DEFAULTS.sidebarNewsletterTitle),
+    sidebarNewsletterDek: pickMarketingStr(d.sidebarNewsletterDek, MARKETING_DEFAULTS.sidebarNewsletterDek),
+    homepageTrustTitle: pickMarketingStr(d.homepageTrustTitle, MARKETING_DEFAULTS.homepageTrustTitle),
+    homepageTrustBody: pickMarketingStr(d.homepageTrustBody, MARKETING_DEFAULTS.homepageTrustBody),
+    relatedStoriesTitle: pickMarketingStr(d.relatedStoriesTitle, MARKETING_DEFAULTS.relatedStoriesTitle),
+    categoryPopularSearchesTitle: pickMarketingStr(
+      d.categoryPopularSearchesTitle,
+      MARKETING_DEFAULTS.categoryPopularSearchesTitle,
+    ),
+    newsletterReadersSayTitle: pickMarketingStr(
+      d.newsletterReadersSayTitle,
+      MARKETING_DEFAULTS.newsletterReadersSayTitle,
+    ),
+    searchIntroEyebrow: pickMarketingStr(d.searchIntroEyebrow, MARKETING_DEFAULTS.searchIntroEyebrow),
+    searchIntroTitle: pickMarketingStr(d.searchIntroTitle, MARKETING_DEFAULTS.searchIntroTitle),
+    searchIntroDek: pickMarketingStr(d.searchIntroDek, MARKETING_DEFAULTS.searchIntroDek),
+    searchTrendingTitle: pickMarketingStr(d.searchTrendingTitle, MARKETING_DEFAULTS.searchTrendingTitle),
   };
 }
 
@@ -212,6 +269,44 @@ export async function upsertSiteEditorialConfig(payload: Partial<HomeEditorialRe
       payload.sectionFreshEditorsTitle !== undefined
         ? String(payload.sectionFreshEditorsTitle || "")
         : cur.sectionFreshEditorsTitle,
+    sidebarSeasonalGuidesLabel:
+      payload.sidebarSeasonalGuidesLabel !== undefined
+        ? String(payload.sidebarSeasonalGuidesLabel || "")
+        : cur.sidebarSeasonalGuidesLabel,
+    sidebarNewsletterKicker:
+      payload.sidebarNewsletterKicker !== undefined
+        ? String(payload.sidebarNewsletterKicker || "")
+        : cur.sidebarNewsletterKicker,
+    sidebarNewsletterTitle:
+      payload.sidebarNewsletterTitle !== undefined
+        ? String(payload.sidebarNewsletterTitle || "")
+        : cur.sidebarNewsletterTitle,
+    sidebarNewsletterDek:
+      payload.sidebarNewsletterDek !== undefined
+        ? String(payload.sidebarNewsletterDek || "")
+        : cur.sidebarNewsletterDek,
+    homepageTrustTitle:
+      payload.homepageTrustTitle !== undefined ? String(payload.homepageTrustTitle || "") : cur.homepageTrustTitle,
+    homepageTrustBody:
+      payload.homepageTrustBody !== undefined ? String(payload.homepageTrustBody || "") : cur.homepageTrustBody,
+    relatedStoriesTitle:
+      payload.relatedStoriesTitle !== undefined ? String(payload.relatedStoriesTitle || "") : cur.relatedStoriesTitle,
+    categoryPopularSearchesTitle:
+      payload.categoryPopularSearchesTitle !== undefined
+        ? String(payload.categoryPopularSearchesTitle || "")
+        : cur.categoryPopularSearchesTitle,
+    newsletterReadersSayTitle:
+      payload.newsletterReadersSayTitle !== undefined
+        ? String(payload.newsletterReadersSayTitle || "")
+        : cur.newsletterReadersSayTitle,
+    searchIntroEyebrow:
+      payload.searchIntroEyebrow !== undefined ? String(payload.searchIntroEyebrow || "") : cur.searchIntroEyebrow,
+    searchIntroTitle:
+      payload.searchIntroTitle !== undefined ? String(payload.searchIntroTitle || "") : cur.searchIntroTitle,
+    searchIntroDek:
+      payload.searchIntroDek !== undefined ? String(payload.searchIntroDek || "") : cur.searchIntroDek,
+    searchTrendingTitle:
+      payload.searchTrendingTitle !== undefined ? String(payload.searchTrendingTitle || "") : cur.searchTrendingTitle,
   };
 
   await connectDb();
@@ -243,10 +338,33 @@ export async function upsertSiteEditorialConfig(payload: Partial<HomeEditorialRe
         sectionMostPinnedTitle: merged.sectionMostPinnedTitle || undefined,
         sectionMostPinnedDek: merged.sectionMostPinnedDek || undefined,
         sectionFreshEditorsTitle: merged.sectionFreshEditorsTitle || undefined,
+        sidebarSeasonalGuidesLabel: merged.sidebarSeasonalGuidesLabel || undefined,
+        sidebarNewsletterKicker: merged.sidebarNewsletterKicker || undefined,
+        sidebarNewsletterTitle: merged.sidebarNewsletterTitle || undefined,
+        sidebarNewsletterDek: merged.sidebarNewsletterDek || undefined,
+        homepageTrustTitle: merged.homepageTrustTitle || undefined,
+        homepageTrustBody: merged.homepageTrustBody || undefined,
+        relatedStoriesTitle: merged.relatedStoriesTitle || undefined,
+        categoryPopularSearchesTitle: merged.categoryPopularSearchesTitle || undefined,
+        newsletterReadersSayTitle: merged.newsletterReadersSayTitle || undefined,
+        searchIntroEyebrow: merged.searchIntroEyebrow || undefined,
+        searchIntroTitle: merged.searchIntroTitle || undefined,
+        searchIntroDek: merged.searchIntroDek || undefined,
+        searchTrendingTitle: merged.searchTrendingTitle || undefined,
       },
     },
     { upsert: true },
   );
 
-  return merged;
+  return mapDocToResolved(merged as unknown as SiteEditorialConfigLean);
+}
+
+/** Add or remove a slug from the homepage “Editor’s choice” rail (order preserved except new adds go first). */
+export async function toggleEditorsChoiceSlug(articleSlug: string, include: boolean): Promise<void> {
+  const s = String(articleSlug || "").trim();
+  if (!s) return;
+  const cur = await loadEditorialFromDatabase();
+  const rest = cur.editorsChoiceSlugs.filter((x) => x !== s);
+  const next = include ? [s, ...rest] : rest;
+  await upsertSiteEditorialConfig({ editorsChoiceSlugs: next });
 }

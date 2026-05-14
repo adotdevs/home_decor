@@ -186,7 +186,13 @@ export function HomeExperience({
         </div>
 
         <div className="mt-8 grid gap-10 lg:grid-cols-4 lg:items-start lg:gap-8">
-          <InspirationSidebar seasonalItems={seasonalItems} />
+          <InspirationSidebar
+            seasonalItems={seasonalItems}
+            seasonalLabel={editorial.sidebarSeasonalGuidesLabel}
+            newsletterKicker={editorial.sidebarNewsletterKicker}
+            newsletterTitle={editorial.sidebarNewsletterTitle}
+            newsletterDek={editorial.sidebarNewsletterDek}
+          />
           <div className="order-2 min-w-0 lg:order-1 lg:col-span-3">
             <HomeFeedLoader
               initial={inspirationInitial}
@@ -278,11 +284,9 @@ export function HomeExperience({
 
       <section className="mx-auto mt-14 max-w-7xl px-4 pb-6 sm:px-5 md:mt-16 md:px-8">
         <div className="rounded-3xl border border-black/5 bg-muted/40 p-8 md:p-12">
-          <h2 className="font-heading text-2xl font-semibold md:text-3xl">Built for search, saves, and serious readers</h2>
+          <h2 className="font-heading text-2xl font-semibold md:text-3xl">{editorial.homepageTrustTitle}</h2>
           <p className="mt-4 max-w-3xl text-muted-foreground">
-            {siteName} publishes long-form, magazine-quality stories with structured FAQs, rich imagery, and internal
-            links between categories — the kind of depth search engines and Pinterest audiences reward. Our layouts leave room for
-            premium ad experiences without breaking editorial rhythm.
+            {editorial.homepageTrustBody.replace(/\{siteName\}/g, siteName)}
           </p>
         </div>
         <div className="mt-8">

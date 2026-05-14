@@ -6,6 +6,7 @@ import { listTrendingArticles, searchArticles } from "@/services/article-service
 import { SearchExperience } from "@/components/search/search-experience";
 import { buildMetadata } from "@/lib/utils/seo";
 import { getResolvedSiteBranding } from "@/services/site-settings-service";
+import { getHomeEditorialResolved } from "@/services/site-editorial-service";
 
 export const dynamic = "force-dynamic";
 
@@ -39,21 +40,24 @@ export default async function SearchPage({ searchParams }: Props) {
   const categorySlug = params.category || undefined;
   const tagSlug = params.tag || undefined;
 
-  const data = q
-    ? await searchArticles({ q, limit: 24, skip, categorySlug, tagSlug })
-    : { results: [] as Record<string, unknown>[], totalApprox: 0, source: "db" as const };
+  const [data, trending, editorial] = await Promise.all([
+    q
+      ? searchArticles({ q, limit: 24, skip, categorySlug, tagSlug })
+      : Promise.resolve({ results: [] as Record<string, unknown>[], totalApprox: 0, source: "db" as const }),
+    listTrendingArticles(8),
+    getHomeEditorialResolved(),
+  ]);
 
   const results = "results" in data ? data.results : [];
-  const trending = await listTrendingArticles(8);
 
   return (
     <div className="mx-auto min-w-0 max-w-7xl px-4 py-8 sm:px-5 md:px-8 md:py-14">
       <div className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Search the library</p>
-        <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight md:text-5xl">Find your next room story</h1>
-        <p className="mt-3 text-muted-foreground">
-          Search articles, tags, and room guides. Use filters to narrow by category or tag.
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          {editorial.searchIntroEyebrow}
         </p>
+        <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight md:text-5xl">{editorial.searchIntroTitle}</h1>
+        <p className="mt-3 text-muted-foreground">{editorial.searchIntroDek}</p>
       </div>
 
       <SearchExperience initialQ={q} initialCategory={categorySlug} initialTag={tagSlug} />
@@ -117,7 +121,7 @@ export default async function SearchPage({ searchParams }: Props) {
         </>
       ) : (
         <div className="mt-12">
-          <h2 className="font-heading text-2xl font-semibold">Trending now</h2>
+          <h2 className="font-heading text-2xl font-semibold">{editorial.searchTrendingTitle}</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {trending.map((a: Record<string, unknown>) => (
               <ArticleCard key={String(a.slug)} article={a as never} />

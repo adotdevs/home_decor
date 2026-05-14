@@ -2,6 +2,7 @@ import { connectDb } from "@/lib/db";
 import { Article } from "@/models/Article";
 import { estimateReadingTime, toSlug } from "@/lib/utils/content";
 import { isArticleExcludedFromTrending, parseExcludeFromTrendingFlag } from "@/lib/utils/exclude-from-trending";
+import { getHomeEditorialResolved, toggleEditorsChoiceSlug } from "@/services/site-editorial-service";
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -239,6 +240,20 @@ export async function articlesBySlugsOrdered(slugs: string[]) {
   }
 }
 
+/** Published editor’s-choice stories in `editorsChoiceSlugs` that belong to this category hub (homepage order preserved). */
+export async function editorsChoiceArticlesForCategory(
+  categorySlug: string,
+  limit = 3,
+): Promise<Record<string, unknown>[]> {
+  const cat = String(categorySlug || "").trim();
+  if (!cat) return [];
+  const editorial = await getHomeEditorialResolved();
+  if (!editorial.editorsChoiceSlugs.length) return [];
+  const ordered = await articlesBySlugsOrdered(editorial.editorsChoiceSlugs);
+  const filtered = ordered.filter((a) => String((a as { categorySlug?: string }).categorySlug) === cat);
+  return filtered.slice(0, Math.max(0, Math.min(limit, 12)));
+}
+
 export async function listPublishedArticlesChronological(skip = 0, limit = 12, excludeSlugs: string[] = []) {
   const ex = [...new Set(excludeSlugs.map((s) => String(s || "").trim()).filter(Boolean))];
   const s = Math.max(0, skip);
@@ -464,7 +479,18 @@ export async function upsertArticle(payload: Record<string, unknown>) {
     update.$unset = unsetFields;
   }
 
-  return Article.findOneAndUpdate({ slug }, update as object, { upsert: true, new: true });
+  const prevSlug = ex?.slug != null ? String(ex.slug).trim() : "";
+  if (prevSlug && prevSlug !== slug) {
+    await toggleEditorsChoiceSlug(prevSlug, false);
+  }
+
+  const doc = await Article.findOneAndUpdate({ slug }, update as object, { upsert: true, new: true });
+
+  if ("inEditorsChoice" in payload) {
+    await toggleEditorsChoiceSlug(slug, Boolean(payload.inEditorsChoice));
+  }
+
+  return doc;
 }
 
 export type TrendingAdminRow = {

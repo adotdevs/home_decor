@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import { ArticleRatingBadge } from "@/components/reviews/article-rating-badge";
 
 const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -37,6 +38,14 @@ export function FeaturedRail({ articles }: { articles: Array<Record<string, unkn
                 sizes="340px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent transition-opacity duration-500 group-hover:from-black/62" />
+              <div className="absolute right-2.5 top-2.5">
+                <ArticleRatingBadge
+                  average={Number(a.reviewAverage ?? 0)}
+                  count={Number(a.reviewCount ?? 0)}
+                  dense
+                  className="border-0 bg-black/40 text-white ring-1 ring-white/25 backdrop-blur-md [&_span]:text-white"
+                />
+              </div>
               <p className="absolute bottom-3 left-3 right-3 font-heading text-xl leading-snug text-white drop-shadow-sm">
                 {String(a.title)}
               </p>

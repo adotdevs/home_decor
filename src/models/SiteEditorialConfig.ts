@@ -51,6 +51,24 @@ const SiteEditorialConfigSchema = new Schema(
     sectionMostPinnedTitle: String,
     sectionMostPinnedDek: String,
     sectionFreshEditorsTitle: String,
+    /** Homepage sidebar — seasonal list kicker */
+    sidebarSeasonalGuidesLabel: String,
+    sidebarNewsletterKicker: String,
+    sidebarNewsletterTitle: String,
+    sidebarNewsletterDek: String,
+    /** Homepage bottom trust strip */
+    homepageTrustTitle: String,
+    /** Use `{siteName}` placeholder; replaced at render */
+    homepageTrustBody: String,
+    /** Article detail related rail kicker */
+    relatedStoriesTitle: String,
+    /** Category hub “popular searches” — use `{category}` for hub display name */
+    categoryPopularSearchesTitle: String,
+    newsletterReadersSayTitle: String,
+    searchIntroEyebrow: String,
+    searchIntroTitle: String,
+    searchIntroDek: String,
+    searchTrendingTitle: String,
   },
   { timestamps: true },
 );
@@ -89,6 +107,19 @@ export type SiteEditorialConfigLean = {
   sectionMostPinnedTitle?: string;
   sectionMostPinnedDek?: string;
   sectionFreshEditorsTitle?: string;
+  sidebarSeasonalGuidesLabel?: string;
+  sidebarNewsletterKicker?: string;
+  sidebarNewsletterTitle?: string;
+  sidebarNewsletterDek?: string;
+  homepageTrustTitle?: string;
+  homepageTrustBody?: string;
+  relatedStoriesTitle?: string;
+  categoryPopularSearchesTitle?: string;
+  newsletterReadersSayTitle?: string;
+  searchIntroEyebrow?: string;
+  searchIntroTitle?: string;
+  searchIntroDek?: string;
+  searchTrendingTitle?: string;
   updatedAt?: Date;
 };
 

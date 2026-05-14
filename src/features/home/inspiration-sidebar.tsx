@@ -3,7 +3,19 @@ import { AdSlot } from "@/components/ads/ad-slot";
 import type { DefaultSeasonalItem } from "@/config/site-defaults";
 import { MotionSurface } from "@/features/home/motion-surface";
 
-export function InspirationSidebar({ seasonalItems }: { seasonalItems: DefaultSeasonalItem[] }) {
+export function InspirationSidebar({
+  seasonalItems,
+  seasonalLabel = "Seasonal guides",
+  newsletterKicker = "Newsletter",
+  newsletterTitle = "Saturday styling letter",
+  newsletterDek = "Room formulas, shopping edits, and quiet-luxury notes — weekly.",
+}: {
+  seasonalItems: DefaultSeasonalItem[];
+  seasonalLabel?: string;
+  newsletterKicker?: string;
+  newsletterTitle?: string;
+  newsletterDek?: string;
+}) {
   return (
     <aside className="order-1 lg:order-2 lg:col-span-1">
       <p className="mb-3 pl-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground lg:hidden">
@@ -17,9 +29,9 @@ export function InspirationSidebar({ seasonalItems }: { seasonalItems: DefaultSe
           className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center rounded-3xl border border-black/5 bg-card/90 p-5 shadow-sm backdrop-blur-sm sm:w-[min(22rem,calc(100vw-3rem))] lg:w-full lg:min-w-0 lg:shrink lg:snap-none"
           delay={0}
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Newsletter</p>
-          <p className="mt-3 font-heading text-xl">Saturday styling letter</p>
-          <p className="mt-2 text-sm text-muted-foreground">Room formulas, shopping edits, and quiet-luxury notes — weekly.</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{newsletterKicker}</p>
+          <p className="mt-3 font-heading text-xl">{newsletterTitle}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{newsletterDek}</p>
           <Link
             href="/newsletter"
             className="mt-4 inline-flex w-full justify-center rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-95"
@@ -43,7 +55,7 @@ export function InspirationSidebar({ seasonalItems }: { seasonalItems: DefaultSe
           delay={0.12}
           hoverShadow="0 18px 36px -20px rgba(0,0,0,0.2)"
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Seasonal guides</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{seasonalLabel}</p>
           <ul className="mt-4 space-y-3 text-sm">
             {seasonalItems.map((s) => (
               <li key={s.slug}>

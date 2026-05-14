@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { cookies } from "next/headers";
+import { put } from "@vercel/blob";
 import { connectDb } from "@/lib/db";
 import { MediaUpload } from "@/models/MediaUpload";
 import { authCookie, verifyAdminToken } from "@/lib/utils/auth";
@@ -22,6 +23,11 @@ function parseGalleryFields(formData: FormData): { showInGallery: boolean; galle
 async function requireAdmin() {
   const token = (await cookies()).get(authCookie)?.value;
   return Boolean(token && verifyAdminToken(token));
+}
+
+/** Vercel serverless has a read-only filesystem; local disk uploads only work in dev / self-hosted Node. */
+function isVercelServerless(): boolean {
+  return process.env.VERCEL === "1";
 }
 
 export async function GET() {
@@ -53,9 +59,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "File too large (max 8MB)" }, { status: 400 });
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-
   const original = file.name || "upload";
   const extFromName = path.extname(original).toLowerCase();
   const ext =
@@ -71,9 +74,39 @@ export async function POST(req: Request) {
 
   const filename = `${randomUUID()}${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadDir, filename), buffer);
 
-  const url = `/uploads/${filename}`;
+  let url: string;
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const blobPath = `uploads/${filename}`;
+      const blob = await put(blobPath, buffer, {
+        access: "public",
+        contentType: file.type,
+        addRandomSuffix: false,
+      });
+      url = blob.url;
+    } catch (e) {
+      console.error("[media] Vercel Blob upload failed", e);
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Blob storage upload failed" },
+        { status: 500 },
+      );
+    }
+  } else if (isVercelServerless()) {
+    return NextResponse.json(
+      {
+        error:
+          "Uploads on Vercel need Blob storage: Vercel dashboard → Storage → Blob → create a store and connect this project (adds BLOB_READ_WRITE_TOKEN), then redeploy.",
+      },
+      { status: 503 },
+    );
+  } else {
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(path.join(uploadDir, filename), buffer);
+    url = `/uploads/${filename}`;
+  }
+
   await connectDb();
   const doc = await MediaUpload.create({
     url,

@@ -6,6 +6,8 @@ import { RevealOnScroll, type RevealOnScrollProps } from "@/components/motion/re
 import {
   defaultRevealDuration,
   editorialEase,
+  polishPreReveal,
+  polishSettled,
   safeHiddenFade,
   safeHiddenFadeUp,
   safeHiddenScale,
@@ -14,16 +16,27 @@ import {
 } from "@/lib/motion/presets";
 import { staggerContainerVariants, staggerItemFadeUp } from "@/lib/motion/variants";
 
-export function FadeIn({
+/** Safe vertical fade: opacity stays 1; refines y/scale only. */
+export function SafeFade({
   children,
   delay = 0,
   ...props
 }: Omit<RevealOnScrollProps, "offscreen" | "onscreen"> & { children: ReactNode; delay?: number }) {
   return (
-    <RevealOnScroll offscreen={{ ...safeHiddenFade, y: 0 }} onscreen={{ opacity: 1, y: 0, scale: 1 }} delay={delay} {...props}>
+    <RevealOnScroll offscreen={{ ...safeHiddenFade, y: 4 }} onscreen={{ ...polishSettled }} delay={delay} {...props}>
       {children}
     </RevealOnScroll>
   );
+}
+
+/** Alias: same as SafeFade — kept for copy clarity. */
+export function SafeReveal(props: Parameters<typeof SafeFade>[0]) {
+  return <SafeFade {...props} />;
+}
+
+/** @deprecated Prefer SafeFade — “FadeIn” historically implied opacity gating; this implementation is safe. */
+export function FadeIn(props: Parameters<typeof SafeFade>[0]) {
+  return <SafeFade {...props} />;
 }
 
 export function FadeUp({
@@ -37,23 +50,28 @@ export function FadeUp({
   );
 }
 
-export function ScaleIn({
+export function SafeScale({
   children,
   ...props
 }: Omit<RevealOnScrollProps, "offscreen" | "onscreen"> & { children: ReactNode }) {
   return (
-    <RevealOnScroll offscreen={{ ...safeHiddenScale }} onscreen={{ ...safeVisible }} {...props}>
+    <RevealOnScroll offscreen={{ ...safeHiddenScale }} onscreen={{ ...polishSettled }} {...props}>
       {children}
     </RevealOnScroll>
   );
 }
 
+export function ScaleIn(props: Parameters<typeof SafeScale>[0]) {
+  return <SafeScale {...props} />;
+}
+
 type SlideDir = "left" | "right";
 
-export function SlideIn({
+/** Horizontal slide only — full opacity throughout. */
+export function SafeSlide({
   children,
   direction = "left",
-  distance = 16,
+  distance = 14,
   ...props
 }: Omit<RevealOnScrollProps, "offscreen" | "onscreen"> & {
   children: ReactNode;
@@ -63,13 +81,17 @@ export function SlideIn({
   const x0 = direction === "left" ? -distance : distance;
   return (
     <RevealOnScroll
-      offscreen={{ opacity: 0.9, x: x0, y: 0, scale: 1 }}
+      offscreen={{ opacity: 1, x: x0, y: 0, scale: 1 }}
       onscreen={{ opacity: 1, x: 0, y: 0, scale: 1 }}
       {...props}
     >
       {children}
     </RevealOnScroll>
   );
+}
+
+export function SlideIn(props: Parameters<typeof SafeSlide>[0]) {
+  return <SafeSlide {...props} />;
 }
 
 export function MasonryReveal({
@@ -81,8 +103,8 @@ export function MasonryReveal({
       viewportMargin={viewportPresets.masonry}
       viewportAmount={0.015}
       duration={defaultRevealDuration * 0.9}
-      offscreen={{ ...safeHiddenFadeUp }}
-      onscreen={{ ...safeVisible }}
+      offscreen={{ ...polishPreReveal, y: 5 }}
+      onscreen={{ ...polishSettled }}
       {...props}
     >
       {children}
@@ -90,7 +112,8 @@ export function MasonryReveal({
   );
 }
 
-export function StaggerContainer({
+/** Stagger container — children use EditorialStaggerItem / StaggerItem. */
+export function EditorialStagger({
   children,
   className,
   stagger = 0.048,
@@ -114,7 +137,7 @@ export function StaggerContainer({
   );
 }
 
-export function StaggerItem({ children, className }: { children: ReactNode; className?: string }) {
+export function EditorialStaggerItem({ children, className }: { children: ReactNode; className?: string }) {
   const reduce = useReducedMotion() === true;
   return (
     <motion.div className={className} variants={staggerItemFadeUp(reduce)}>
@@ -123,7 +146,14 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
   );
 }
 
-export function HoverCardAnimation({
+export function StaggerContainer(props: Parameters<typeof EditorialStagger>[0]) {
+  return <EditorialStagger {...props} />;
+}
+
+/** @deprecated Alias of EditorialStaggerItem */
+export const StaggerItem = EditorialStaggerItem;
+
+export function SoftHover({
   children,
   className,
   hoverLift = true,
@@ -147,4 +177,8 @@ export function HoverCardAnimation({
       {children}
     </motion.div>
   );
+}
+
+export function HoverCardAnimation(props: Parameters<typeof SoftHover>[0]) {
+  return <SoftHover {...props} />;
 }

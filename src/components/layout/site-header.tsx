@@ -237,9 +237,9 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                   <motion.button
                     type="button"
                     key="mobile-nav-backdrop"
-                    initial={{ opacity: 0 }}
+                    initial={{ opacity: 0.88 }}
                     animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    exit={{ opacity: 0.85 }}
                     transition={{ duration: reduce ? 0.01 : 0.28, ease: panelEase }}
                     className="fixed inset-x-0 bottom-0 top-14 z-[160] bg-black/45 backdrop-blur-[2px] sm:top-16 md:hidden"
                     aria-label="Close menu"
@@ -277,7 +277,7 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                       {nav.map(([label, href], i) => (
                         <motion.div
                           key={href}
-                          initial={reduce ? false : { opacity: 0.92, x: 12 }}
+                          initial={reduce ? false : { opacity: 0.98, x: 10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{
                             delay: reduce ? 0 : 0.05 + i * 0.035,

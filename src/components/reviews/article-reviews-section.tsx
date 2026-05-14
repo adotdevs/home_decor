@@ -285,9 +285,9 @@ export function ArticleReviewsSection({
       <AnimatePresence>
         {edit ? (
           <motion.div
-            initial={reduce ? false : { opacity: 0 }}
+            initial={reduce ? false : { opacity: 0.92 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0.88 }}
             className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 backdrop-blur-sm sm:items-center"
             role="dialog"
             aria-modal="true"

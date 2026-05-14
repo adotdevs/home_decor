@@ -110,9 +110,9 @@ export function SearchCommand() {
           <>
             <motion.button
               type="button"
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 0.88 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0.85 }}
               transition={{ duration: reduce ? 0.01 : 0.2, ease }}
               className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-[2px]"
               aria-label="Close search"
@@ -122,9 +122,9 @@ export function SearchCommand() {
               role="dialog"
               aria-modal="true"
               aria-label="Search"
-              initial={{ opacity: 0, y: reduce ? 0 : 16 }}
+              initial={{ opacity: 0.94, y: reduce ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: reduce ? 0 : 12 }}
+              exit={{ opacity: 0.9, y: reduce ? 0 : 8 }}
               transition={{ duration: reduce ? 0.01 : 0.32, ease }}
               className="fixed left-2 right-2 top-[8vh] z-[260] mx-auto max-h-[85vh] max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-2xl md:left-1/2 md:w-full md:-translate-x-1/2"
             >

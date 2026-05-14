@@ -38,7 +38,7 @@ export function AutoMoodRail({
       </div>
       <motion.div
         key={String(a.slug)}
-        initial={reduce ? false : { opacity: 0.92, y: 10 }}
+        initial={reduce ? false : { opacity: 0.98, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: reduce ? 0 : 0.55, ease: editorialEase }}
         className="mt-8"

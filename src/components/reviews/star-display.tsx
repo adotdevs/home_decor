@@ -50,10 +50,10 @@ export function StarDisplay({
             />
             {interactive && !reduce ? (
               <motion.span
-                className="pointer-events-none absolute inset-0 rounded-md bg-amber-400/15"
+                className="pointer-events-none absolute inset-0 rounded-md"
                 initial={false}
-                whileHover={{ opacity: 1 }}
-                style={{ opacity: 0 }}
+                whileHover={{ backgroundColor: "rgba(251, 191, 36, 0.15)" }}
+                style={{ backgroundColor: "rgba(251, 191, 36, 0)" }}
               />
             ) : null}
           </button>

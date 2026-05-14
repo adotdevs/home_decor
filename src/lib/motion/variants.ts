@@ -1,6 +1,7 @@
 import type { Variants } from "framer-motion";
 import { editorialEase, motionDurations } from "@/styles/motion";
 
+/** Editorial stagger: timing only on container; children never drop below full opacity. */
 export function staggerContainerVariants(reduce: boolean, stagger = 0.048, delayChildren = 0.06): Variants {
   return {
     hidden: {},
@@ -13,9 +14,10 @@ export function staggerContainerVariants(reduce: boolean, stagger = 0.048, delay
   };
 }
 
+/** Item: always visible — only light translate; no opacity gating. */
 export function staggerItemFadeUp(reduce: boolean): Variants {
   return {
-    hidden: reduce ? { opacity: 1, y: 0 } : { opacity: 0.9, y: 12 },
+    hidden: reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: 8 },
     visible: {
       opacity: 1,
       y: 0,

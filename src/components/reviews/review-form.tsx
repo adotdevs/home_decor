@@ -163,9 +163,9 @@ export function ReviewForm({
       <AnimatePresence>
         {done ? (
           <motion.div
-            initial={reduce ? false : { opacity: 0, y: 8 }}
+            initial={reduce ? false : { opacity: 0.96, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0.9 }}
             className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-3xl bg-white/85 backdrop-blur-md dark:bg-black/70"
           >
             <p className="font-heading text-lg font-semibold text-emerald-700 dark:text-emerald-300">Thank you — your review is live.</p>

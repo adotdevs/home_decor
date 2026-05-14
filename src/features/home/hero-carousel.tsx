@@ -61,6 +61,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlideConfig[] }) {
               key={`${s.src}-${idx}`}
               className="absolute inset-0"
               initial={false}
+              // Inactive slides use opacity 0 only for stacked crossfade; exactly one slide is always at opacity 1.
               animate={{ opacity: idx === i ? 1 : 0, scale: idx === i ? 1 : 1.03 }}
               transition={{ duration: reduce ? 0 : motionDurations.carousel, ease: editorialEase }}
             >
@@ -94,9 +95,9 @@ export function HeroCarousel({ slides }: { slides: HeroSlideConfig[] }) {
             <AnimatePresence initial={false} mode="wait">
               <motion.div
                 key={`${slide.src}-${i}`}
-                initial={reduce ? false : { opacity: 0.94, y: 12 }}
+                initial={reduce ? false : { opacity: 0.96, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduce ? undefined : { opacity: 0, y: -8 }}
+                exit={reduce ? undefined : { opacity: 0.88, y: -4 }}
                 transition={{ duration: reduce ? 0 : 0.4, ease: textEase }}
                 aria-live="polite"
               >

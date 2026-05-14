@@ -31,7 +31,7 @@ export function ReviewCard({
   return (
     <motion.article
       layout
-      initial={reduce ? false : { opacity: 0.94, y: 14 }}
+      initial={reduce ? false : { opacity: 0.98, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       className={cn(

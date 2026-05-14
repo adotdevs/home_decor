@@ -26,7 +26,11 @@ export function ReviewsBreakdown({
             <div className="relative h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.08]">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-300"
-                initial={reduce ? { width: `${pct}%` } : { width: 0 }}
+                initial={
+                  reduce
+                    ? { width: `${pct}%` }
+                    : { width: pct === 0 ? "0%" : `${Math.max(8, Math.round(pct * 0.88))}%` }
+                }
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1], delay: s * 0.04 }}
               />

@@ -11,7 +11,11 @@ export default async function Page() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl">Search analytics</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Top queries (last 30 days) logged from the public search API.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Queries logged when visitors load the public <code className="rounded bg-muted px-1 text-xs">/search</code> page
+            (server-side). API suggestions via <code className="rounded bg-muted px-1 text-xs">/api/search?suggest=1</code> are not
+            counted here.
+          </p>
         </div>
         <Link href="/admin/analytics" className="text-sm text-muted-foreground hover:underline">
           View site analytics →

@@ -7,6 +7,7 @@ import { SearchExperience } from "@/components/search/search-experience";
 import { buildMetadata } from "@/lib/utils/seo";
 import { getResolvedSiteBranding } from "@/services/site-settings-service";
 import { getHomeEditorialResolved } from "@/services/site-editorial-service";
+import { logSearchExecution } from "@/services/search-query-service";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,15 @@ export default async function SearchPage({ searchParams }: Props) {
   ]);
 
   const results = "results" in data ? data.results : [];
+
+  if (q.length >= 2) {
+    await logSearchExecution({
+      q,
+      resultCount: results.length,
+      categorySlug,
+      tagSlug,
+    });
+  }
 
   return (
     <div className="mx-auto min-w-0 max-w-7xl px-4 py-8 sm:px-5 md:px-8 md:py-14">

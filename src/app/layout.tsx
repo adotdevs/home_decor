@@ -5,6 +5,7 @@ import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { AnalyticsRoot } from "@/components/analytics/analytics-root";
 import { JsonLd } from "@/components/seo/json-ld";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { buildMetadata } from "@/lib/utils/seo";
@@ -72,7 +73,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <AdSlot placement="header" />
           </div>
         </Suspense>
-        <div className="min-h-[70vh] min-w-0 overflow-x-clip pb-24 md:pb-8">{children}</div>
+        <AnalyticsRoot>
+          <div className="min-h-[70vh] min-w-0 overflow-x-clip pb-24 md:pb-8">{children}</div>
+        </AnalyticsRoot>
         <SiteFooter siteName={b.name} siteDescription={b.description} />
         <Suspense fallback={null}>
           <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/5 bg-background/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md md:hidden">

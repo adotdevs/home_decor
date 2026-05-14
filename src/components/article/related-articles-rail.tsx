@@ -16,7 +16,7 @@ export function RelatedArticlesRail({
       <ul className="mt-4 space-y-4">
         {articles.map((a: Record<string, unknown>) => (
           <li key={String(a.slug)}>
-            <Link href={`/article/${a.slug}`} className="group flex gap-3">
+            <Link href={`/article/${a.slug}`} className="group flex gap-3" data-analytics-kind="related_article">
               <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-xl">
                 <Image
                   src={String(a.featuredImage || "/images/heroes/editorial-living.jpg")}

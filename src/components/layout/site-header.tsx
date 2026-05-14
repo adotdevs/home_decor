@@ -209,12 +209,12 @@ export function SiteHeader({ siteName }: { siteName: string }) {
           >
             Search
           </Link>
-          <Link
+          {/* <Link
             href="/admin/login"
             className="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-block"
           >
             Admin
-          </Link>
+          </Link> */}
           <button
             ref={menuButtonRef}
             type="button"
@@ -332,13 +332,13 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                       <Link href="/search" className={linkMobile("/search")} onClick={close}>
                         Search
                       </Link>
-                      <Link
+                      {/* <Link
                         href="/admin/login"
                         className="mt-2 block rounded-xl px-4 py-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         onClick={close}
                       >
                         Admin
-                      </Link>
+                      </Link> */}
                     </div>
                   </motion.nav>
                 </>

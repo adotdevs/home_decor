@@ -40,7 +40,10 @@ export function ArticleCard({ article }: { article: CardArticle }) {
   const href = `/article/${article.slug}`;
 
   return (
-    <article className="group overflow-hidden rounded-3xl border border-black/5 bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <article
+      data-analytics-kind="article_card"
+      className="group overflow-hidden rounded-3xl border border-black/5 bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+    >
       <Link href={href} className="relative block h-48 w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
         <Image
           src={article.featuredImage || `/images/categories/${article.categorySlug || "decoration"}.svg`}

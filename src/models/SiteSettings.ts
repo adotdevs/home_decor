@@ -8,6 +8,19 @@ const SeasonalItemSchema = new Schema(
     description: { type: String, required: true },
     imageKey: { type: String, enum: [...SEASONAL_IMAGE_KEYS], required: true },
     articlesTagPath: { type: String, default: "" },
+    pageIntro: { type: String, default: "" },
+    storiesSectionTitle: { type: String, default: "" },
+    newsletterCtaLabel: { type: String, default: "" },
+    hubLinksIntro: { type: String, default: "" },
+    extraHubLinks: {
+      type: [
+        {
+          label: { type: String, required: true },
+          href: { type: String, required: true },
+        },
+      ],
+      default: [],
+    },
   },
   { _id: false },
 );

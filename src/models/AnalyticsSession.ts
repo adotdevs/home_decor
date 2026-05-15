@@ -13,8 +13,20 @@ const AnalyticsSessionSchema = new Schema(
     exitPath: { type: String, default: "/" },
     referrer: { type: String, default: "" },
     referrerHost: { type: String, default: "", index: true },
-    /** direct | google | pinterest | social | search_other | referral */
+    /** High-level category, e.g. google_organic | google_ads | facebook | direct */
     trafficSource: { type: String, default: "direct", index: true },
+    trafficSourceDetail: { type: String, default: "" },
+    trafficSourceMedium: { type: String, default: "" },
+    lastSeenLiveAt: { type: Date, index: true },
+    utmSource: { type: String, default: "" },
+    utmMedium: { type: String, default: "" },
+    utmCampaign: { type: String, default: "" },
+    utmTerm: { type: String, default: "" },
+    utmContent: { type: String, default: "" },
+    gclid: { type: String, default: "" },
+    fbclid: { type: String, default: "" },
+    ttclid: { type: String, default: "" },
+    landingUrl: { type: String, default: "" },
     country: { type: String, default: "" },
     city: { type: String, default: "" },
     region: { type: String, default: "" },
@@ -32,6 +44,7 @@ const AnalyticsSessionSchema = new Schema(
 
 AnalyticsSessionSchema.index({ visitorKey: 1, startedAt: -1 });
 AnalyticsSessionSchema.index({ lastActivityAt: -1 });
+AnalyticsSessionSchema.index({ lastSeenLiveAt: -1 });
 
 export type AnalyticsSessionLean = {
   sessionKey: string;

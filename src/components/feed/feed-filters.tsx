@@ -2,19 +2,21 @@
 
 import { useState, useMemo } from "react";
 import { MasonryFeed } from "@/features/home/masonry-feed";
-import { categoryTree } from "@/config/site";
 
 const ALL_CHIP = { name: "All rooms", slug: "all" };
-const CHIPS = [ALL_CHIP, ...categoryTree.map((c) => ({ name: c.name, slug: c.slug }))];
 
 export function FeedFilters({
   articles,
   maxItems = 48,
+  rooms,
 }: {
   articles: Record<string, unknown>[];
   maxItems?: number;
+  rooms: { name: string; slug: string }[];
 }) {
   const [active, setActive] = useState("all");
+
+  const chips = useMemo(() => [ALL_CHIP, ...rooms.map((c) => ({ name: c.name, slug: c.slug }))], [rooms]);
 
   const filtered = useMemo(() => {
     if (active === "all") return articles;
@@ -33,7 +35,7 @@ export function FeedFilters({
         aria-label="Filter by room"
         className="mt-8 flex flex-wrap gap-2"
       >
-        {CHIPS.map((chip) => (
+        {chips.map((chip) => (
           <button
             key={chip.slug}
             type="button"
@@ -57,7 +59,7 @@ export function FeedFilters({
       {/* Feed */}
       <div className="mt-8">
         {filtered.length > 0 ? (
-          <MasonryFeed articles={filtered} maxItems={maxItems} />
+          <MasonryFeed articles={filtered} maxItems={maxItems} wideLayout />
         ) : (
           <p className="py-20 text-center text-muted-foreground">
             No articles in this category yet.

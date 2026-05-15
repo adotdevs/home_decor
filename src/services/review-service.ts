@@ -380,7 +380,7 @@ const NEGATIVE_REVIEW_LEX =
 const POSITIVE_REVIEW_LEX =
   /\b(love|loved|loving|beautiful|helpful|amazing|great|wonderful|perfect|thank|thanks|enjoyed|enjoy|inspiring|recommend|excellent|fantastic|pleased|happy|refresh|transformed|gorgeous|stunning|brilliant|appreciate|worth|well written|well-written|highly recommend)\b/i;
 
-function newsletterReviewByline(username: string): string {
+export function newsletterReviewByline(username: string): string {
   const parts = String(username || "")
     .trim()
     .split(/\s+/)
@@ -395,7 +395,7 @@ function newsletterReviewByline(username: string): string {
   return `${first} ${li}.`;
 }
 
-function newsletterReviewBody(doc: { reviewTitle: string; reviewText: string }): string {
+export function newsletterReviewBody(doc: { reviewTitle: string; reviewText: string }): string {
   const body = String(doc.reviewText || "").replace(/\s+/g, " ").trim();
   const title = String(doc.reviewTitle || "").replace(/\s+/g, " ").trim();
   let quote = body;
@@ -463,4 +463,27 @@ export async function getNewsletterSocialProofQuotes(limit = 3): Promise<Newslet
   }
 
   return out.slice(0, limit);
+}
+
+/** Featured quotes on `/newsletter` when admin selects specific live reviews by id (order preserved). */
+export async function getNewsletterQuotesByReviewIds(ids: string[]): Promise<NewsletterSocialProofQuote[]> {
+  const cleaned = ids.map((id) => String(id).trim()).filter(Boolean);
+  if (!cleaned.length) return [];
+  await connectDb();
+  const oids = cleaned
+    .filter((id) => mongoose.Types.ObjectId.isValid(id))
+    .map((id) => new mongoose.Types.ObjectId(id));
+  if (!oids.length) return [];
+  const docs = await ArticleReview.find({ _id: { $in: oids }, status: "live" }).lean();
+  const map = new Map(docs.map((d) => [String(d._id), d]));
+  const out: NewsletterSocialProofQuote[] = [];
+  for (const id of cleaned) {
+    const doc = map.get(id);
+    if (!doc) continue;
+    out.push({
+      quote: newsletterReviewBody(doc),
+      byline: newsletterReviewByline(String(doc.username)),
+    });
+  }
+  return out;
 }

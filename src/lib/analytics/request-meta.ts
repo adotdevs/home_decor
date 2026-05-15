@@ -1,31 +1,19 @@
 /** Analytics request / visitor metadata helpers (server-safe). */
 
+import { classifyTrafficSourceLegacy } from "@/lib/analytics/traffic-source";
+
+/** Exclude real in-app browsers; keep aggressive for crawlers & perf tools. */
 const BOT_UA =
-  /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|quora|whatsapp|telegram|lighthouse|preview|prerender|headlesschrome|phantomjs/i;
+  /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|quora|telegrambot|lighthouse|pagespeed|chrome-lighthouse|gtmetrix|uptimerobot|pingdom|statuscake|preview|prerender|headlesschrome|phantomjs|scrapy|python-requests|^curl\/|wget|^java\//i;
 
 export function isLikelyBotUserAgent(ua: string | null | undefined): boolean {
   if (!ua || ua.length < 10) return true;
   return BOT_UA.test(ua);
 }
 
+/** @deprecated Legacy 6-bucket label; ingest uses full getTrafficSource categories. */
 export function classifyTrafficSource(referrerUrl: string | null | undefined): string {
-  if (!referrerUrl || !referrerUrl.trim()) return "direct";
-  try {
-    const u = new URL(referrerUrl);
-    const host = u.hostname.replace(/^www\./i, "").toLowerCase();
-    if (!host) return "direct";
-    if (/^google\./.test(host)) return "google";
-    if (/^(.+\.)?bing\.com$/.test(host) || /^search\.yahoo\.com$/.test(host)) return "search_other";
-    if (/pinterest\./.test(host) || /^t\.co$/.test(host)) return "pinterest";
-    if (
-      /facebook\.|instagram\.|twitter\.|x\.com$|linkedin\.|reddit\.|tiktok\./.test(host)
-    ) {
-      return "social";
-    }
-    return "referral";
-  } catch {
-    return "direct";
-  }
+  return classifyTrafficSourceLegacy(referrerUrl);
 }
 
 export function referrerHostFromUrl(referrerUrl: string | null | undefined): string {

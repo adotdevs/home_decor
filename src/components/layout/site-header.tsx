@@ -1,15 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { categoryTree } from "@/config/site";
+import type { CategoryTreeTop } from "@/services/category-service";
 import { cn } from "@/lib/utils";
 import { SearchCommand } from "@/components/search/search-command";
+import { SiteLogo } from "@/components/layout/site-logo";
 
 const nav = [
   ["Latest", "/latest"],
@@ -26,7 +26,7 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SiteHeader({ siteName }: { siteName: string }) {
+export function SiteHeader({ siteName, categoryTree }: { siteName: string; categoryTree: CategoryTreeTop[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -107,16 +107,9 @@ export function SiteHeader({ siteName }: { siteName: string }) {
 
   return (
     <header className="sticky top-0 z-[200] border-b border-black/5 bg-background/95 shadow-sm">
-      <div className="relative z-[210] mx-auto flex h-14 max-w-7xl min-w-0 items-center justify-between gap-3 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:h-16 sm:px-5 md:px-8">
+      <div style={{height:'4.5rem'}} className="relative z-[210] mx-auto flex h-14 max-w-7xl min-w-0 items-center justify-between gap-3 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:h-16 sm:px-5 md:px-8">
         <Link href="/" className="relative flex min-w-0 shrink-0 items-center">
-          <Image
-            src="/logo.svg"
-            alt={siteName}
-            width={160}
-            height={32}
-            priority
-            className="h-7 w-auto sm:h-8"
-          />
+          <SiteLogo siteName={siteName} priority />
         </Link>
 
         <nav className="hidden min-w-0 items-center gap-6 text-sm md:flex lg:gap-7" aria-label="Primary">
@@ -180,12 +173,12 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                       </Link>
                       <ul className="mt-0 space-y-0">
                         {cat.subcategories.map((sub) => (
-                          <li key={sub}>
+                          <li key={sub.slug}>
                             <Link
-                              href={`/category/${cat.slug}/${sub}`}
+                              href={`/category/${cat.slug}/${sub.slug}`}
                               className="block rounded-lg px-3 py-2 text-[15px] leading-snug text-muted-foreground transition-colors hover:bg-background hover:text-foreground hover:shadow-sm md:text-base md:py-2 md:pl-4"
                             >
-                              {sub.replace(/-/g, " ")}
+                              {sub.name}
                             </Link>
                           </li>
                         ))}
@@ -262,8 +255,10 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                     }}
                     className="fixed bottom-0 right-0 top-14 z-[170] flex w-[min(100%,22rem)] flex-col border-l border-border bg-background shadow-[-12px_0_48px_rgba(0,0,0,0.12)] sm:top-16 md:hidden"
                   >
-                    <div className="flex items-center justify-between border-b border-border px-5 py-4">
-                      <span className="font-heading text-lg font-semibold tracking-tight">Browse</span>
+                    <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+                      <Link href="/" onClick={close} className="min-w-0 shrink">
+                        <SiteLogo siteName={siteName} className="h-9 w-auto max-w-[10rem]" />
+                      </Link>
                       <button
                         type="button"
                         className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -313,13 +308,13 @@ export function SiteHeader({ siteName }: { siteName: string }) {
                                   </Link>
                                 </li>
                                 {cat.subcategories.map((sub) => (
-                                  <li key={sub}>
+                                  <li key={sub.slug}>
                                     <Link
-                                      href={`/category/${cat.slug}/${sub}`}
+                                      href={`/category/${cat.slug}/${sub.slug}`}
                                       className="block rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                                       onClick={close}
                                     >
-                                      {sub.replace(/-/g, " ")}
+                                      {sub.name}
                                     </Link>
                                   </li>
                                 ))}

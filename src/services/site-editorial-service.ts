@@ -18,6 +18,7 @@ const MARKETING_DEFAULTS = {
     "{siteName} publishes long-form, magazine-quality stories with structured FAQs, rich imagery, and internal links between categories — the kind of depth search engines and Pinterest audiences reward. Our layouts leave room for premium ad experiences without breaking editorial rhythm.",
   relatedStoriesTitle: "Related stories",
   categoryPopularSearchesTitle: "Popular searches in {category}",
+  categoryRelatedStoriesTitle: "Popular reads in {category}",
   newsletterReadersSayTitle: "What our readers say",
   searchIntroEyebrow: "Search the library",
   searchIntroTitle: "Find your next room story",
@@ -143,6 +144,7 @@ export type HomeEditorialResolved = {
   homepageTrustBody: string;
   relatedStoriesTitle: string;
   categoryPopularSearchesTitle: string;
+  categoryRelatedStoriesTitle: string;
   newsletterReadersSayTitle: string;
   searchIntroEyebrow: string;
   searchIntroTitle: string;
@@ -189,6 +191,10 @@ function mapDocToResolved(d: SiteEditorialConfigLean | Record<string, never>): H
     categoryPopularSearchesTitle: pickMarketingStr(
       d.categoryPopularSearchesTitle,
       MARKETING_DEFAULTS.categoryPopularSearchesTitle,
+    ),
+    categoryRelatedStoriesTitle: pickMarketingStr(
+      d.categoryRelatedStoriesTitle,
+      MARKETING_DEFAULTS.categoryRelatedStoriesTitle,
     ),
     newsletterReadersSayTitle: pickMarketingStr(
       d.newsletterReadersSayTitle,
@@ -315,6 +321,10 @@ export async function upsertSiteEditorialConfig(payload: Partial<HomeEditorialRe
       payload.categoryPopularSearchesTitle !== undefined
         ? String(payload.categoryPopularSearchesTitle || "")
         : cur.categoryPopularSearchesTitle,
+    categoryRelatedStoriesTitle:
+      payload.categoryRelatedStoriesTitle !== undefined
+        ? String(payload.categoryRelatedStoriesTitle || "")
+        : cur.categoryRelatedStoriesTitle,
     newsletterReadersSayTitle:
       payload.newsletterReadersSayTitle !== undefined
         ? String(payload.newsletterReadersSayTitle || "")
@@ -366,6 +376,7 @@ export async function upsertSiteEditorialConfig(payload: Partial<HomeEditorialRe
         homepageTrustBody: merged.homepageTrustBody || undefined,
         relatedStoriesTitle: merged.relatedStoriesTitle || undefined,
         categoryPopularSearchesTitle: merged.categoryPopularSearchesTitle || undefined,
+        categoryRelatedStoriesTitle: merged.categoryRelatedStoriesTitle || undefined,
         newsletterReadersSayTitle: merged.newsletterReadersSayTitle || undefined,
         searchIntroEyebrow: merged.searchIntroEyebrow || undefined,
         searchIntroTitle: merged.searchIntroTitle || undefined,

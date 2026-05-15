@@ -4,7 +4,10 @@ export type AnalyticsDashboard = {
   sessions: number;
   pageViews: number;
   clicks: number;
+  /** Share of sessions that recorded at least one tracked click (industry-style “engaged sessions”). */
   ctr: number;
+  /** Clicks divided by page views (can exceed 100% when UI generates many events per view). */
+  ctrEventLevel: number;
   avgSessionDurationSec: number;
   bounceRatePct: number;
   searchCount: number;

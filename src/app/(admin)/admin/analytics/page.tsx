@@ -61,9 +61,9 @@ export default async function AnalyticsPage() {
         <div>
           <h1 className="font-heading text-3xl font-bold tracking-tight md:text-4xl">Analytics</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            First-party metrics with 30-minute sliding sessions (extended while a tab stays visible via light presence
-            pings), visitor IDs mirrored in a cookie when possible, bot filtering, and search logging from the public
-            search page.
+            First-party metrics: per-tab sessions with a 30-minute inactivity timeout (sessionStorage), heartbeats only for
+            live counts (they do not extend session length), visitor IDs in localStorage + cookie, bot filtering,
+            debounced search logging from the browser, and marketing attribution from the landing URL.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -91,7 +91,7 @@ export default async function AnalyticsPage() {
         <Kpi
           label="Sessions (30d)"
           value={fmt(d.sessions)}
-          hint="30m idle window; extends while tab is visible (presence)"
+          hint="Per browser tab; 30m idle (last real page/click/article engagement only)"
           icon={Layers}
           iconClass="border-amber-200/60 text-amber-700 dark:border-amber-900/50 dark:text-amber-400"
         />
@@ -122,7 +122,7 @@ export default async function AnalyticsPage() {
         <Kpi
           label="CTR"
           value={`${d.ctr.toFixed(2)}%`}
-          hint="Clicks ÷ page views"
+          hint={`Sessions with ≥1 tracked click ÷ sessions. Event density: ${d.ctrEventLevel.toFixed(2)}% (clicks ÷ views)`}
           icon={TrendingUp}
           iconClass="border-amber-200/60 text-amber-800 dark:border-amber-900/50 dark:text-amber-300"
         />
@@ -136,14 +136,14 @@ export default async function AnalyticsPage() {
         <Kpi
           label="Avg. session"
           value={fmtDur(d.avgSessionDurationSec)}
-          hint="Last activity − session start"
+          hint="From last engagement event to session start (capped at 4h)"
           icon={Globe}
           iconClass="border-teal-200/60 text-teal-700 dark:border-teal-900/50 dark:text-teal-400"
         />
         <Kpi
           label="Searches logged"
           value={fmt(d.searchCount)}
-          hint={`${fmt(d.searchNoResultCount)} with zero results`}
+          hint={`${fmt(d.searchNoResultCount)} zero-result · debounced client beacon`}
           icon={Search}
           iconClass="border-indigo-200/60 text-indigo-700 dark:border-indigo-900/50 dark:text-indigo-400"
         />

@@ -1,14 +1,18 @@
 export const dynamic = "force-dynamic";
 import type { MetadataRoute } from "next";
-import { categoryTree } from "@/config/site";
 import { tagToPathSlug } from "@/data/tag-utils";
 import { connectDb } from "@/lib/db";
 import { Article } from "@/models/Article";
 import { absoluteUrl } from "@/lib/utils/seo";
 import { getResolvedSiteBranding, getSeasonalInspirationResolved } from "@/services/site-settings-service";
+import { getCategoryTree } from "@/services/category-service";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [base, seasonalItems] = await Promise.all([getResolvedSiteBranding(), getSeasonalInspirationResolved()]);
+  const [base, seasonalItems, categoryTree] = await Promise.all([
+    getResolvedSiteBranding(),
+    getSeasonalInspirationResolved(),
+    getCategoryTree(),
+  ]);
   const now = new Date();
   const core = [
     "",
@@ -34,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const categoryUrls = categoryTree.flatMap((c) => [
     { url: absoluteUrl(`/category/${c.slug}`, base.url), lastModified: now },
     ...c.subcategories.map((sub) => ({
-      url: absoluteUrl(`/category/${c.slug}/${sub}`, base.url),
+      url: absoluteUrl(`/category/${c.slug}/${sub.slug}`, base.url),
       lastModified: now,
     })),
   ]);

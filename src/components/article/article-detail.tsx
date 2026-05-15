@@ -84,11 +84,6 @@ export function ArticleDetail({
             <h1 className="font-heading mt-3 text-4xl leading-[1.08] md:text-5xl lg:text-6xl">{String(article.title)}</h1>
             <p className="mt-4 text-lg text-muted-foreground md:text-xl">{String(article.excerpt || "")}</p>
             <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              {article.authorName ? (
-                <Link href={`/author/${article.authorSlug}`} className="font-medium text-foreground hover:underline">
-                  {String(article.authorName)}
-                </Link>
-              ) : null}
               <span>{readMins} min read</span>
               {article.publishedAt ? (
                 <time dateTime={new Date(article.publishedAt as string).toISOString()}>

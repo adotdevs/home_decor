@@ -170,23 +170,26 @@ export function HomeExperience({
         <AutoMoodRail title={moodTitle} dek={moodDek} articles={moodArticles.length ? moodArticles : latestForFresh.slice(0, 6)} />
       </div>
 
-      <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-5 md:mt-20 md:px-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="font-heading text-2xl font-semibold sm:text-3xl md:text-4xl">
+      <section className="mx-auto mt-14 max-w-7xl min-w-0 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-5 md:mt-20 md:px-8">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+          <div className="min-w-0 max-w-full flex-1">
+            <h2 className="font-heading text-2xl font-semibold text-balance break-words hyphens-auto sm:text-3xl md:text-4xl">
               {editorial.inspirationFeedTitle.trim() || "Inspiration feed"}
             </h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+            <p className="mt-2 max-w-2xl text-pretty text-sm text-muted-foreground [overflow-wrap:anywhere] sm:text-base">
               {editorial.inspirationFeedDek.trim() ||
                 "A Pinterest-style waterfall of real editorials — every card opens a full styling playbook."}
             </p>
           </div>
-          <Link href="/inspiration/feed" className="shrink-0 text-sm font-semibold text-primary hover:underline">
+          <Link
+            href="/inspiration/feed"
+            className="inline-flex shrink-0 self-start py-1 text-sm font-semibold text-primary hover:underline sm:self-auto sm:py-0"
+          >
             Open full feed
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-10 lg:grid-cols-4 lg:items-start lg:gap-8">
+        <div className="mt-8 grid min-w-0 gap-10 lg:grid-cols-4 lg:items-start lg:gap-8">
           <InspirationSidebar
             seasonalItems={seasonalItems}
             seasonalLabel={editorial.sidebarSeasonalGuidesLabel}
@@ -230,42 +233,44 @@ export function HomeExperience({
         <ShopTheLookRow items={editorial.shopTheLookItems} />
       </div>
 
-      <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-5 md:mt-20 md:px-8">
-        <h2 className="font-heading text-3xl font-semibold">Shop the rooms — by category</h2>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Every category hub links to subcategory playbooks, so you can drill from mood board to execution.
-        </p>
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {categoryCards.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/category/${cat.slug}`}
-              className="group overflow-hidden rounded-3xl border border-black/5 bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className="relative h-48 w-full">
-                <Image
-                  src={cat.image}
-                  alt={cat.imageAlt}
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                  sizes="400px"
-                  unoptimized={cat.image.startsWith("http")}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
-                <h3 className="absolute bottom-4 left-4 font-heading text-2xl text-white drop-shadow">{cat.name}</h3>
-              </div>
-              <div className="p-5">
-                <p className="text-sm text-muted-foreground">
-                  {cat.subcategoryCount} curated subtopics — from product picks to layout math.
-                </p>
-                <span className="mt-3 inline-block text-sm font-semibold text-primary">
-                  Explore {cat.name.toLowerCase()} →
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {categoryCards.length > 0 ? (
+        <section className="mx-auto mt-16 max-w-7xl px-4 sm:px-5 md:mt-20 md:px-8">
+          <h2 className="font-heading text-3xl font-semibold">Shop the rooms — by category</h2>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Every category hub links to subcategory playbooks, so you can drill from mood board to execution.
+          </p>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {categoryCards.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
+                className="group overflow-hidden rounded-3xl border border-black/5 bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={cat.image}
+                    alt={cat.imageAlt}
+                    fill
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                    sizes="400px"
+                    unoptimized={cat.image.startsWith("http")}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+                  <h3 className="absolute bottom-4 left-4 font-heading text-2xl text-white drop-shadow">{cat.name}</h3>
+                </div>
+                <div className="p-5">
+                  <p className="text-sm text-muted-foreground">
+                    {cat.subcategoryCount} curated subtopics — from product picks to layout math.
+                  </p>
+                  <span className="mt-3 inline-block text-sm font-semibold text-primary">
+                    Explore {cat.name.toLowerCase()} →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mx-auto mt-14 max-w-7xl px-4 sm:px-5 md:mt-16 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">

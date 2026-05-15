@@ -10,9 +10,10 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(Number(searchParams.get("limit") || "24"), 60);
   const skip = Math.max(Number(searchParams.get("skip") || "0"), 0);
   const categorySlug = searchParams.get("category") || undefined;
+  const subcategorySlug = searchParams.get("subcategory") || undefined;
   const tagSlug = searchParams.get("tag") || undefined;
 
-  const data = await searchArticles({ q, suggest, limit, skip, categorySlug, tagSlug });
+  const data = await searchArticles({ q, suggest, limit, skip, categorySlug, subcategorySlug, tagSlug });
 
   if (!suggest && q.trim().length >= 2) {
     try {

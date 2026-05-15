@@ -40,6 +40,8 @@ const ArticleSchema = new Schema(
     popularityScore: { type: Number, default: 0, index: true },
     /** Lower = higher in trending when set (manual slots). Omit for pure popularity ordering. */
     trendingRank: { type: Number, default: undefined },
+    /** Omit from /trending and homepage “most pinned” when true */
+    excludeFromTrending: { type: Boolean, default: false },
     /** Denormalized from live reviews for fast cards & SEO */
     reviewAverage: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
@@ -51,7 +53,7 @@ ArticleSchema.index({ title: "text", excerpt: "text", tags: "text" });
 
 /**
  * Next.js dev / Turbopack can keep a stale compiled model on hot reload; old schemas strip fields
- * that were added later (e.g. trendingRank, excludeFromTrending). Drop the cache in development.
+ * that were added later (e.g. trendingRank). Drop the cache in development.
  */
 if (process.env.NODE_ENV !== "production" && mongoose.models.Article) {
   delete mongoose.models.Article;

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { SiteLogo } from "@/components/layout/site-logo";
 
 const baseLinks: [string, string][] = [
   ["Dashboard", "/admin"],
@@ -19,6 +20,7 @@ const baseLinks: [string, string][] = [
   ["Categories", "/admin/categories"],
   ["Ads", "/admin/ads"],
   ["SEO", "/admin/seo"],
+  ["Public pages", "/admin/pages"],
   ["Media", "/admin/media"],
   ["Users", "/admin/users"],
 ];
@@ -60,7 +62,15 @@ function NavLinks({ showOwnerNav, onNavigate }: { showOwnerNav: boolean; onNavig
   );
 }
 
-export function AdminShell({ children, showOwnerNav = false }: { children: React.ReactNode; showOwnerNav?: boolean }) {
+export function AdminShell({
+  children,
+  showOwnerNav = false,
+  siteName,
+}: {
+  children: React.ReactNode;
+  showOwnerNav?: boolean;
+  siteName: string;
+}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -76,8 +86,12 @@ export function AdminShell({ children, showOwnerNav = false }: { children: React
     <div className="min-h-screen bg-muted/20">
       {/* Mobile top bar */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-card px-4 shadow-sm md:hidden">
-        <Link href="/admin" className="cursor-pointer font-heading text-lg font-semibold tracking-tight" onClick={() => setOpen(false)}>
-          Admin
+        <Link
+          href="/admin"
+          className="flex min-w-0 shrink items-center"
+          onClick={() => setOpen(false)}
+        >
+          <SiteLogo siteName={siteName} className="h-8 w-auto max-w-[140px] object-contain object-left" />
         </Link>
         <button
           type="button"
@@ -109,6 +123,9 @@ export function AdminShell({ children, showOwnerNav = false }: { children: React
             ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
           `}
         >
+          <Link href="/admin" className="mb-4 hidden md:block" onClick={() => setOpen(false)}>
+            <SiteLogo siteName={siteName} className="w-full max-w-[180px]" />
+          </Link>
           <p className="mb-4 hidden text-xs uppercase tracking-[0.15em] text-muted-foreground md:block">Admin</p>
           <p className="mb-4 text-xs uppercase tracking-[0.15em] text-muted-foreground md:hidden">Menu</p>
           <NavLinks showOwnerNav={showOwnerNav} onNavigate={() => setOpen(false)} />

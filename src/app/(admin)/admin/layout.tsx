@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/utils/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { isPlatformOwnerEmail } from "@/lib/utils/platform-owner";
+import { getResolvedSiteBranding } from "@/services/site-settings-service";
 
 export default async function AdminLayout({
   children,
@@ -21,6 +22,11 @@ export default async function AdminLayout({
   if (!admin) redirect("/admin/login");
 
   const showOwnerNav = isPlatformOwnerEmail(admin.email);
+  const branding = await getResolvedSiteBranding();
 
-  return <AdminShell showOwnerNav={showOwnerNav}>{children}</AdminShell>;
+  return (
+    <AdminShell showOwnerNav={showOwnerNav} siteName={branding.name}>
+      {children}
+    </AdminShell>
+  );
 }

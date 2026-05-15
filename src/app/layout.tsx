@@ -10,6 +10,8 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { buildMetadata } from "@/lib/utils/seo";
 import { getResolvedSiteBranding } from "@/services/site-settings-service";
+import { getCategoryTree } from "@/services/category-service";
+import { getGlobalMarketingMerged } from "@/services/site-page-marketing-service";
 
 const heading = Cormorant_Garamond({
   subsets: ["latin"],
@@ -36,7 +38,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const b = await getResolvedSiteBranding();
+  const [b, categoryTree, g] = await Promise.all([
+    getResolvedSiteBranding(),
+    getCategoryTree(),
+    getGlobalMarketingMerged(),
+  ]);
   const baseUrl = b.url.replace(/\/$/, "");
   const orgSchema = {
     "@context": "https://schema.org",
@@ -67,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <JsonLd data={orgSchema} />
         <JsonLd data={websiteSchema} />
-        <SiteHeader siteName={b.name} />
+        <SiteHeader siteName={b.name} categoryTree={categoryTree} />
         <Suspense fallback={null}>
           <div className="mx-auto max-w-7xl min-w-0 overflow-x-clip px-4 pb-2 pt-1 sm:px-5 md:px-8">
             <AdSlot placement="header" />
@@ -76,7 +82,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AnalyticsRoot>
           <div className="min-h-[70vh] min-w-0 overflow-x-clip pb-24 md:pb-8">{children}</div>
         </AnalyticsRoot>
-        <SiteFooter siteName={b.name} siteDescription={b.description} />
+        <SiteFooter
+          siteName={b.name}
+          siteDescription={b.description}
+          categoryTree={categoryTree}
+          footerMiniNewsletterLine={g.footerMiniNewsletterLine}
+          footerSubscribeButtonLabel={g.footerSubscribeButtonLabel}
+          footerEmailPlaceholder={g.footerEmailPlaceholder}
+        />
         <Suspense fallback={null}>
           <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/5 bg-background/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md md:hidden">
             <div className="mx-auto max-w-7xl min-w-0 overflow-x-hidden">

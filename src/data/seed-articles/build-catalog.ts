@@ -1,5 +1,6 @@
 import { images } from "@/config/images";
-import { evergreenTags, categoryTree } from "@/config/site";
+import { evergreenTags } from "@/config/site";
+import { DEFAULT_CATEGORY_TREE } from "@/data/seed-categories";
 
 type Block = {
   type: "paragraph" | "heading" | "image" | "quote" | "list";
@@ -270,7 +271,7 @@ export function buildCatalogArticles(): CatalogArticle[] {
   const dayMs = 86400000;
   const base = Date.now() - 45 * dayMs;
 
-  for (const cat of categoryTree) {
+  for (const cat of DEFAULT_CATEGORY_TREE) {
     for (const sub of cat.subcategories) {
       const subPretty = prettyLabel(sub);
       const variants = [

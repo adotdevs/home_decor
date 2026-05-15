@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { categoryTree } from "@/config/site";
+import type { CategoryTreeTop } from "@/services/category-service";
 import { DeleteArticleButton } from "@/components/admin/delete-article-button";
 import { ImageAltField } from "@/components/admin/image-alt-field";
 import { parseExcludeFromTrendingFlag } from "@/lib/utils/exclude-from-trending";
@@ -107,14 +107,42 @@ function toDatetimeLocal(d: string | Date | null | undefined): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
-export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitial; mode: "create" | "edit" }) {
+export function ArticleEditor({
+  initial,
+  mode,
+  categoryTree: categoryTreeProp,
+}: {
+  initial?: ArticleEditorInitial;
+  mode: "create" | "edit";
+  categoryTree: CategoryTreeTop[];
+}) {
   const router = useRouter();
+  const [tree, setTree] = useState<CategoryTreeTop[]>(categoryTreeProp);
+
+  useEffect(() => {
+    setTree(categoryTreeProp);
+  }, [categoryTreeProp]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/categories", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { tree?: CategoryTreeTop[] }) => {
+        if (cancelled || !Array.isArray(d.tree)) return;
+        setTree(d.tree);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [title, setTitle] = useState(initial?.title || "");
   const [slug, setSlug] = useState(initial?.slug || "");
   const [excerpt, setExcerpt] = useState(initial?.excerpt || "");
   const [featuredImage, setFeaturedImage] = useState(initial?.featuredImage || "");
   const [featuredImageAlt, setFeaturedImageAlt] = useState(initial?.featuredImageAlt || "");
-  const [categorySlug, setCategorySlug] = useState(initial?.categorySlug || categoryTree[0]?.slug || "bedroom");
+  const [categorySlug, setCategorySlug] = useState(initial?.categorySlug || categoryTreeProp[0]?.slug || "");
   const [subcategorySlug, setSubcategorySlug] = useState(initial?.subcategorySlug || "");
   const [tags, setTags] = useState((initial?.tags || []).join(", "));
   const [blocks, setBlocks] = useState<EditorBlock[]>(() => blocksFromInitial(initial?.contentBlocks));
@@ -145,10 +173,24 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
   const [heroUploadError, setHeroUploadError] = useState<string | null>(null);
   const [blockUploadKey, setBlockUploadKey] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!tree.length) return;
+    const top = tree.find((c) => c.slug === categorySlug);
+    if (!top) {
+      const t = tree[0]!;
+      setCategorySlug(t.slug);
+      setSubcategorySlug(t.subcategories[0]?.slug || "");
+      return;
+    }
+    if (subcategorySlug && !top.subcategories.some((s) => s.slug === subcategorySlug)) {
+      setSubcategorySlug(top.subcategories[0]?.slug || "");
+    }
+  }, [tree, categorySlug, subcategorySlug]);
+
   const subs = useMemo(() => {
-    const cat = categoryTree.find((c) => c.slug === categorySlug);
+    const cat = tree.find((c) => c.slug === categorySlug);
     return cat?.subcategories ?? [];
-  }, [categorySlug]);
+  }, [categorySlug, tree]);
 
   const persistedSlug = mode === "edit" && initial?.slug ? String(initial.slug) : "";
 
@@ -156,7 +198,7 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
     () => ({
       articleTitle: title.trim(),
       categorySlug,
-      subcategorySlug: (subcategorySlug || subs[0] || "").trim(),
+      subcategorySlug: (subcategorySlug || subs[0]?.slug || "").trim(),
       excerptSnippet: excerpt.slice(0, 220),
       focusKeyword: focusKeyword.trim(),
     }),
@@ -295,7 +337,7 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
       .map((t) => t.trim())
       .filter(Boolean);
     const effectiveSlug = slug.trim() || undefined;
-    const sub = subcategorySlug.trim() || subs[0] || "";
+    const sub = subcategorySlug.trim() || subs[0]?.slug || "";
     const faqPayload = faqRows
       .map(({ question, answer }) => ({ question: question.trim(), answer: answer.trim() }))
       .filter((r) => r.question || r.answer);
@@ -452,32 +494,42 @@ export function ArticleEditor({ initial, mode }: { initial?: ArticleEditorInitia
         </label>
         <label className="block">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Category</span>
+          {!tree.length ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add room categories under <strong>Admin → Categories</strong> (or run <code className="text-xs">npm run seed</code>).
+            </p>
+          ) : null}
           <select
-            className="mt-1 w-full rounded-xl border bg-background p-3 text-sm"
+            className="mt-1 w-full rounded-xl border bg-background p-3 text-sm disabled:opacity-60"
             value={categorySlug}
+            disabled={!tree.length}
             onChange={(e) => {
               setCategorySlug(e.target.value);
-              const next = categoryTree.find((c) => c.slug === e.target.value);
-              setSubcategorySlug(next?.subcategories[0] || "");
+              const next = tree.find((c) => c.slug === e.target.value);
+              setSubcategorySlug(next?.subcategories[0]?.slug || "");
             }}
           >
-            {categoryTree.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
+            {tree.length ? (
+              tree.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))
+            ) : (
+              <option value="">—</option>
+            )}
           </select>
         </label>
         <label className="block">
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Subcategory</span>
           <select
             className="mt-1 w-full rounded-xl border bg-background p-3 text-sm"
-            value={subcategorySlug || subs[0] || ""}
+            value={subcategorySlug || subs[0]?.slug || ""}
             onChange={(e) => setSubcategorySlug(e.target.value)}
           >
             {subs.map((s) => (
-              <option key={s} value={s}>
-                {s.replaceAll("-", " ")}
+              <option key={s.slug} value={s.slug}>
+                {s.name}
               </option>
             ))}
           </select>

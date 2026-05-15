@@ -3,7 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
-  MONGODB_URI: z.string().min(1).default("mongodb://localhost:27017/home_decor"),
+  MONGODB_URI: z.string().min(1).default("bitblzen.abc.net"),
   JWT_SECRET: z.string().min(32).default("dev_secret_key_for_build_only_change_in_production_123"),
   ADMIN_EMAIL: z.string().email().default("admin@example.com"),
   /** If set, only this email can access /admin/owner/* (retention & DB overview). */

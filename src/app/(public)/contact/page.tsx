@@ -64,7 +64,7 @@ export default function ContactPage() {
 
   return (
     <>
-      <title>Contact Us — CoreFusion</title>
+      <title>Contact Us — Core Fusion Infinity</title>
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:px-8">
         {/* Page header */}
         <div className="mb-12 max-w-xl">

@@ -24,7 +24,7 @@ export const images = {
   gallery: (i: number) => `/images/gallery/masonry-${String(i).padStart(2, "0")}.jpg`,
 } as const;
 
-/** Category index / homepage cards — matches `categoryTree` slugs. */
+/** Default hero thumbnails by slug when `Category.image` is unset in Mongo. */
 export function categoryHeroImage(categorySlug: string): string {
   const map: Record<string, string> = {
     bedroom: images.categories.bedroom,

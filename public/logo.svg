@@ -1,6 +1,6 @@
-<svg width="220" height="44" viewBox="0 0 220 44" xmlns="http://www.w3.org/2000/svg" fill="none">
+<svg width="300" height="44" viewBox="0 0 300 44" xmlns="http://www.w3.org/2000/svg" fill="none">
   <rect width="44" height="44" rx="14" fill="#2B241D"/>
   <path d="M12 29L21.5 13L31 29" stroke="#F5EBDD" stroke-width="2.2" stroke-linecap="round"/>
   <circle cx="22" cy="23" r="3" fill="#D9B07E"/>
-  <text x="56" y="29" fill="#2B241D" font-family="Georgia, serif" font-size="18" font-weight="700" letter-spacing="-0.02em">CoreFusion</text>
+  <text x="56" y="29" fill="#2B241D" font-family="Georgia, serif" font-size="13" font-weight="700" letter-spacing="-0.02em">Core Fusion Infinity</text>
 </svg>

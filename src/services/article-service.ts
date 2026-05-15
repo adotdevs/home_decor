@@ -1,4 +1,5 @@
 import { connectDb } from "@/lib/db";
+import { AnalyticsEvent } from "@/models/AnalyticsEvent";
 import { Article } from "@/models/Article";
 import { readingMinutesForArticle, toSlug } from "@/lib/utils/content";
 import { isArticleExcludedFromTrending, parseExcludeFromTrendingFlag } from "@/lib/utils/exclude-from-trending";
@@ -133,6 +134,8 @@ export type SearchParams = {
   limit?: number;
   skip?: number;
   categorySlug?: string;
+  /** When set, results must match this article subcategory slug */
+  subcategorySlug?: string;
   tagSlug?: string;
 };
 
@@ -161,6 +164,229 @@ export async function listDistinctPublishedTags(): Promise<string[]> {
   }
 }
 
+/** Words dropped before multi-term AND search; query still works if nothing remains (uses raw tokens). */
+const SEARCH_STOPWORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "for",
+  "to",
+  "in",
+  "of",
+  "on",
+  "with",
+  "at",
+  "by",
+  "from",
+  "as",
+  "is",
+  "it",
+  "are",
+  "was",
+  "be",
+  "been",
+  "your",
+  "our",
+  "their",
+  "this",
+  "that",
+  "these",
+  "those",
+]);
+
+function tokenizeSearchQuery(q: string): string[] {
+  const raw = q.trim();
+  if (raw.length < 2) return [];
+  const parts = raw
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2);
+  let tokens = parts.filter((t) => !SEARCH_STOPWORDS.has(t.toLowerCase()));
+  if (!tokens.length) tokens = parts;
+  if (!tokens.length) tokens = [raw];
+  return tokens.slice(0, 8);
+}
+
+function tokenMatchClause(token: string): object {
+  const rx = new RegExp(escapeRegex(token), "i");
+  return {
+    $or: [{ title: rx }, { excerpt: rx }, { tags: rx }, { focusKeyword: rx }],
+  };
+}
+
+/** Shared filter pieces for search + hit checks (published only — add `status` at call site). */
+async function buildPublishedSearchAndParts(opts: {
+  categorySlug?: string;
+  subcategorySlug?: string;
+  tagSlug?: string;
+  q?: string;
+}): Promise<{ ok: true; parts: object[] } | { ok: false }> {
+  const parts: object[] = [];
+  if (opts.categorySlug?.trim()) parts.push({ categorySlug: opts.categorySlug.trim() });
+  if (opts.subcategorySlug?.trim()) parts.push({ subcategorySlug: opts.subcategorySlug.trim() });
+  if (opts.tagSlug?.trim()) {
+    const ts = opts.tagSlug.trim();
+    try {
+      const labels = await distinctTagLabelsMatchingSlug(ts);
+      if (labels.length) parts.push({ tags: { $in: labels } });
+      else parts.push({ tags: new RegExp(ts.replace(/-/g, "[- ]"), "i") });
+    } catch {
+      parts.push({ tags: new RegExp(ts.replace(/-/g, "[- ]"), "i") });
+    }
+  }
+  const q = (opts.q || "").trim();
+  if (q.length > 0 && q.length < 2) return { ok: false };
+  if (q.length >= 2) {
+    const tokens = tokenizeSearchQuery(q);
+    if (!tokens.length) return { ok: false };
+    for (const token of tokens) parts.push(tokenMatchClause(token));
+  }
+  if (parts.length === 0) return { ok: false };
+  return { ok: true, parts };
+}
+
+/** True when at least one published article matches the same rules as /search. */
+export async function publishedSearchHasAnyHit(opts: {
+  q?: string;
+  tagSlug?: string;
+  categorySlug?: string;
+  subcategorySlug?: string;
+}): Promise<boolean> {
+  const built = await buildPublishedSearchAndParts({
+    q: opts.q,
+    tagSlug: opts.tagSlug,
+    categorySlug: opts.categorySlug,
+    subcategorySlug: opts.subcategorySlug,
+  });
+  if (!built.ok) return false;
+  try {
+    await connectDb();
+    const doc = await Article.findOne({ status: "published", $and: built.parts } as object).select("_id").lean();
+    return Boolean(doc);
+  } catch {
+    return false;
+  }
+}
+
+export async function listTopTagsByFrequency(limit = 24): Promise<string[]> {
+  try {
+    await connectDb();
+    const rows = await Article.aggregate<{ _id: string; c: number }>([
+      { $match: { status: "published", tags: { $exists: true, $ne: [] } } },
+      { $unwind: "$tags" },
+      { $group: { _id: "$tags", c: { $sum: 1 } } },
+      { $sort: { c: -1 } },
+      { $limit: Math.min(Math.max(limit, 1), 80) },
+    ]);
+    return rows.map((r) => String(r._id || "").trim()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/** Tag frequency scoped to a category / optional subcategory (published only). */
+export async function listTopTagsByFrequencyInScope(
+  categorySlug?: string,
+  subcategorySlug?: string | null,
+  limit = 24,
+): Promise<string[]> {
+  try {
+    await connectDb();
+    const match: Record<string, unknown> = { status: "published", tags: { $exists: true, $ne: [] } };
+    if (categorySlug?.trim()) match.categorySlug = categorySlug.trim();
+    if (subcategorySlug?.trim()) match.subcategorySlug = subcategorySlug.trim();
+    const rows = await Article.aggregate<{ _id: string; c: number }>([
+      { $match: match },
+      { $unwind: "$tags" },
+      { $group: { _id: "$tags", c: { $sum: 1 } } },
+      { $sort: { c: -1 } },
+      { $limit: Math.min(Math.max(limit, 1), 120) },
+    ]);
+    return rows.map((r) => String(r._id || "").trim()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export async function rankArticleSlugsByAnalyticsPageViews(opts?: { days?: number; limit?: number }): Promise<string[]> {
+  const days = Math.min(Math.max(opts?.days ?? 30, 1), 90);
+  const cap = Math.min(Math.max(opts?.limit ?? 80, 1), 200);
+  try {
+    await connectDb();
+    const since = new Date(Date.now() - days * 86400000);
+    const rows = await AnalyticsEvent.aggregate<{ _id: string; c: number }>([
+      {
+        $match: {
+          type: "page_view",
+          occurredAt: { $gte: since },
+          articleSlug: { $exists: true, $nin: ["", null] },
+        },
+      },
+      { $group: { _id: "$articleSlug", c: { $sum: 1 } } },
+      { $sort: { c: -1 } },
+      { $limit: cap },
+    ]);
+    return rows.map((r) => String(r._id || "").trim()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Popular published stories in a category hub, ordered by on-site article page views from analytics.
+ * Optionally prefers a subcategory first, then fills from the whole parent category.
+ */
+export async function listAnalyticsPopularArticlesForCategoryHub(
+  categorySlug: string,
+  opts: {
+    limit: number;
+    preferSubcategorySlug?: string | null;
+    excludeSlugs?: string[];
+    days?: number;
+  },
+): Promise<Record<string, unknown>[]> {
+  const cat = categorySlug.trim();
+  if (!cat) return [];
+  const limit = Math.min(Math.max(opts.limit, 1), 12);
+  const exclude = new Set((opts.excludeSlugs || []).map((s) => String(s || "").trim()).filter(Boolean));
+  const ranked = await rankArticleSlugsByAnalyticsPageViews({ days: opts.days ?? 30, limit: 120 });
+  if (!ranked.length) return [];
+
+  const pickSlugs = async (sub: string | undefined) => {
+    const filter: Record<string, unknown> = {
+      status: "published",
+      categorySlug: cat,
+      slug: { $in: ranked },
+    };
+    if (sub?.trim()) filter.subcategorySlug = sub.trim();
+    const docs = (await Article.find(filter).select("slug").lean()) as { slug?: string }[];
+    const allowed = new Set(docs.map((d) => String(d.slug || "").trim()).filter(Boolean));
+    const out: string[] = [];
+    for (const s of ranked) {
+      if (!allowed.has(s) || exclude.has(s) || out.includes(s)) continue;
+      out.push(s);
+      if (out.length >= limit) break;
+    }
+    return out;
+  };
+
+  let slugs: string[] = [];
+  if (opts.preferSubcategorySlug?.trim()) {
+    slugs = await pickSlugs(opts.preferSubcategorySlug.trim());
+  }
+  if (slugs.length < limit) {
+    const more = await pickSlugs(undefined);
+    for (const s of more) {
+      if (slugs.includes(s) || exclude.has(s)) continue;
+      slugs.push(s);
+      if (slugs.length >= limit) break;
+    }
+  }
+  return articlesBySlugsOrdered(slugs);
+}
+
 export async function searchArticles(params: SearchParams): Promise<SearchResponse> {
   const q = params.q.trim();
   const limit = Math.min(Math.max(params.limit ?? 24, 1), 60);
@@ -179,63 +405,36 @@ export async function searchArticles(params: SearchParams): Promise<SearchRespon
     }
   }
 
-  if (!q) return { results: [], totalApprox: 0, source: "db" };
+  const built = await buildPublishedSearchAndParts({
+    q: params.q,
+    categorySlug: params.categorySlug,
+    subcategorySlug: params.subcategorySlug,
+    tagSlug: params.tagSlug,
+  });
+  if (!built.ok) return { results: [], totalApprox: 0, source: "db" };
 
-  const baseFilter: Record<string, unknown> = { status: "published" };
-  if (params.categorySlug) baseFilter.categorySlug = params.categorySlug;
-  if (params.tagSlug) {
-    try {
-      const labels = await distinctTagLabelsMatchingSlug(params.tagSlug);
-      baseFilter.tags = labels.length
-        ? { $in: labels }
-        : new RegExp(params.tagSlug.replace(/-/g, "[- ]"), "i");
-    } catch {
-      baseFilter.tags = new RegExp(params.tagSlug.replace(/-/g, "[- ]"), "i");
-    }
-  }
+  const filter: Record<string, unknown> = {
+    status: "published",
+    $and: built.parts,
+  };
 
   try {
     await connectDb();
-    let rows: Record<string, unknown>[] = [];
+    const rawRows = await Article.find(filter as object)
+      .sort({ popularityScore: -1, publishedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    const rows = JSON.parse(JSON.stringify(rawRows)) as Record<string, unknown>[];
+
+    let totalApprox = rows.length + skip;
     try {
-      const textRows = await Article.find({ ...baseFilter, $text: { $search: q } } as object, {
-        score: { $meta: "textScore" },
-      })
-        .sort({ score: { $meta: "textScore" } } as never)
-        .skip(skip)
-        .limit(limit)
-        .lean();
-      rows = JSON.parse(JSON.stringify(textRows));
+      totalApprox = await Article.countDocuments(filter as object);
     } catch {
-      rows = [];
+      totalApprox = rows.length + skip;
     }
 
-    if (!rows.length) {
-      const rx = new RegExp(escapeRegex(q), "i");
-      const fallbackRows = await Article.find({
-        ...baseFilter,
-        $or: [{ title: rx }, { excerpt: rx }, { tags: rx }, { categorySlug: rx }, { focusKeyword: rx }],
-      } as object)
-        .sort({ popularityScore: -1, publishedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean();
-      rows = JSON.parse(JSON.stringify(fallbackRows));
-    }
-
-    if (rows.length) {
-      let totalApprox = rows.length + skip;
-      try {
-        const rx = new RegExp(escapeRegex(q), "i");
-        totalApprox = await Article.countDocuments({
-          ...baseFilter,
-          $or: [{ title: rx }, { excerpt: rx }, { tags: rx }, { categorySlug: rx }],
-        } as object);
-      } catch {
-        totalApprox = rows.length + skip;
-      }
-      return { results: rows, totalApprox, source: "db" };
-    }
+    return { results: rows, totalApprox, source: "db" };
   } catch {
     /* no offline article library */
   }
@@ -393,7 +592,7 @@ export async function upsertArticle(payload: Record<string, unknown>) {
   const existing = await Article.findOne({ slug }).lean();
   const ex = existing ? (JSON.parse(JSON.stringify(existing)) as Record<string, unknown>) : null;
 
-  const categorySlug = String(payload.categorySlug || ex?.categorySlug || "bedroom");
+  const categorySlug = String(payload.categorySlug ?? ex?.categorySlug ?? "").trim();
   const subRaw = payload.subcategorySlug != null ? String(payload.subcategorySlug).trim() : "";
   const subFallback = ex?.subcategorySlug != null ? String(ex.subcategorySlug).trim() : "";
   const subcategorySlug = subRaw || subFallback || undefined;

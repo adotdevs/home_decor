@@ -1,23 +1,39 @@
 export const dynamic = "force-dynamic";
-import { categoryTree } from "@/config/site";
-import { CategoriesAdmin, type TopLevelCategoryRow } from "@/components/admin/categories-admin";
-import { getCategories } from "@/services/category-service";
+import { CategoriesAdmin, type TopLevelCategoryAdminRow } from "@/components/admin/categories-admin";
+import { getCategories, getCategoryTree } from "@/services/category-service";
 
 export default async function Page() {
-  const categories = (await getCategories()) as Array<{
+  const [tree, categories] = await Promise.all([getCategoryTree(), getCategories()]);
+
+  type CatRow = {
     slug: string;
     name?: string;
     parentSlug?: string | null;
     image?: string;
-  }>;
+    imageAlt?: string;
+  };
+  const list = categories as CatRow[];
 
-  const initial: TopLevelCategoryRow[] = categoryTree.map((c) => {
-    const row = categories.find((x) => x.slug === c.slug && (x.parentSlug == null || x.parentSlug === ""));
+  function rowFor(slug: string, parentSlug: string | null): CatRow | undefined {
+    return list.find((c) => {
+      const p = c.parentSlug;
+      const isTop = p == null || p === "";
+      if (parentSlug == null) return c.slug === slug && isTop;
+      return c.slug === slug && p === parentSlug;
+    });
+  }
+
+  const initial: TopLevelCategoryAdminRow[] = tree.map((t) => {
+    const top = rowFor(t.slug, null);
     return {
-      slug: c.slug,
-      name: c.name,
-      image: String(row?.image ?? "").trim(),
-      imageAlt: String((row as { imageAlt?: string })?.imageAlt ?? "").trim(),
+      slug: t.slug,
+      name: t.name,
+      image: String(top?.image ?? "").trim(),
+      imageAlt: String(top?.imageAlt ?? "").trim(),
+      subcategories: t.subcategories.map((s) => {
+        const sub = rowFor(s.slug, t.slug);
+        return { slug: s.slug, name: String(sub?.name ?? s.name).trim() || s.name };
+      }),
     };
   });
 

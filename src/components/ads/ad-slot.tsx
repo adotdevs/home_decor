@@ -1,6 +1,8 @@
 import { getAdByPlacement } from "@/services/ad-service";
 import { cn } from "@/lib/utils";
 
+type AdRow = NonNullable<Awaited<ReturnType<typeof getAdByPlacement>>>;
+
 const placementLayout: Record<
   string,
   { root: string; inner: string }
@@ -36,9 +38,18 @@ const placementLayout: Record<
 };
 
 /** Constrains third-party ad markup so iframes never widen the viewport. */
-export async function AdSlot({ placement, className }: { placement: string; className?: string }) {
+export async function AdSlot({
+  placement,
+  className,
+  /** When set (e.g. parent already fetched), skips a second DB round-trip. */
+  ad: adProp,
+}: {
+  placement: string;
+  className?: string;
+  ad?: AdRow | null;
+}) {
   const layout = placementLayout[placement] ?? placementLayout.default;
-  const ad = await getAdByPlacement(placement);
+  const ad = adProp !== undefined ? adProp : await getAdByPlacement(placement);
 
   if (!ad) {
     return (

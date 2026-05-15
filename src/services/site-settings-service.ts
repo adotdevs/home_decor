@@ -27,6 +27,21 @@ function isSeasonalKey(k: string): k is SeasonalImageKey {
   return (SEASONAL_IMAGE_KEYS as readonly string[]).includes(k);
 }
 
+function normalizeExtraHubLinks(raw: unknown): { label: string; href: string }[] {
+  if (!Array.isArray(raw)) return [];
+  const out: { label: string; href: string }[] = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object") continue;
+    const o = row as Record<string, unknown>;
+    let href = clampStr(o.href, 512);
+    const label = clampStr(o.label, 200);
+    if (!label || !href) continue;
+    if (!href.startsWith("/")) href = `/${href.replace(/^\/+/, "")}`;
+    out.push({ label, href });
+  }
+  return out.slice(0, 16);
+}
+
 function normalizeSeasonalItem(raw: Partial<DefaultSeasonalItem>, fallbackSlug: string): SeasonalInspirationItem | null {
   const slug = String(raw.slug ?? "").trim() || fallbackSlug;
   const name = String(raw.name ?? "").trim();
@@ -34,7 +49,67 @@ function normalizeSeasonalItem(raw: Partial<DefaultSeasonalItem>, fallbackSlug: 
   const ik = String(raw.imageKey ?? "").trim();
   if (!slug || !name || !description || !isSeasonalKey(ik)) return null;
   const articlesTagPath = String(raw.articlesTagPath ?? "").trim() || slug;
-  return { slug, name, description, imageKey: ik, articlesTagPath };
+  return {
+    slug,
+    name,
+    description,
+    imageKey: ik,
+    articlesTagPath,
+    pageIntro: clampStr(raw.pageIntro, 12000),
+    storiesSectionTitle: clampStr(raw.storiesSectionTitle, 400),
+    newsletterCtaLabel: clampStr(raw.newsletterCtaLabel, 240),
+    hubLinksIntro: clampStr(raw.hubLinksIntro, 400),
+    extraHubLinks: normalizeExtraHubLinks(raw.extraHubLinks),
+  };
+}
+
+function trimmedOr(candidate: unknown, fallback: string): string {
+  if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  return fallback;
+}
+
+function mergeSeasonalDbRowOntoDefault(
+  def: DefaultSeasonalItem,
+  row: Partial<DefaultSeasonalItem> | undefined,
+): SeasonalInspirationItem | null {
+  const r = row ?? {};
+  const ikStrRaw = trimmedOr(r.imageKey, "");
+  const imageKeyCandidate = ikStrRaw || def.imageKey;
+  const ikStr = String(imageKeyCandidate).trim();
+  const imageKey = isSeasonalKey(ikStr) ? ikStr : def.imageKey;
+
+  return normalizeSeasonalItem(
+    {
+      slug: def.slug,
+      name: trimmedOr(r.name, def.name),
+      description: trimmedOr(r.description, def.description),
+      imageKey,
+      articlesTagPath: trimmedOr(r.articlesTagPath, def.articlesTagPath || def.slug),
+      pageIntro: trimmedOr(r.pageIntro, def.pageIntro ?? ""),
+      storiesSectionTitle: trimmedOr(r.storiesSectionTitle, def.storiesSectionTitle ?? ""),
+      newsletterCtaLabel: trimmedOr(r.newsletterCtaLabel, def.newsletterCtaLabel ?? ""),
+      hubLinksIntro: trimmedOr(r.hubLinksIntro, def.hubLinksIntro ?? ""),
+      extraHubLinks:
+        Array.isArray(r.extraHubLinks) && r.extraHubLinks.length > 0 ? r.extraHubLinks : def.extraHubLinks ?? [],
+    },
+    def.slug,
+  );
+}
+
+/** Overlays stored seasonal rows onto code defaults per slug — empty DB strings inherit bundled defaults for hub copy fields. */
+export function mergeSeasonalItemsFromDb(storedRows: Partial<DefaultSeasonalItem>[] | undefined | null): SeasonalInspirationItem[] {
+  const bySlug = new Map<string, Partial<DefaultSeasonalItem>>();
+  for (const row of storedRows ?? []) {
+    const slug = String(row?.slug ?? "").trim();
+    if (slug) bySlug.set(slug, row);
+  }
+  const out: SeasonalInspirationItem[] = [];
+  for (const def of DEFAULT_SEASONAL_ITEMS) {
+    const merged = mergeSeasonalDbRowOntoDefault(def, bySlug.get(def.slug));
+    if (merged) out.push(merged);
+  }
+  if (out.length === DEFAULT_SEASONAL_ITEMS.length) return out;
+  return DEFAULT_SEASONAL_ITEMS.map((def) => mergeSeasonalDbRowOntoDefault(def, undefined)!);
 }
 
 export const getResolvedSiteBranding = cache(async (): Promise<ResolvedSiteBranding> => {
@@ -84,19 +159,11 @@ export const getSeasonalInspirationResolved = cache(async (): Promise<SeasonalIn
   try {
     await connectDb();
     const doc = await SiteSettings.findOne({ key: "default" }).select("seasonalItems").lean();
-    const items = doc && (doc as { seasonalItems?: Partial<DefaultSeasonalItem>[] }).seasonalItems;
-    if (Array.isArray(items) && items.length > 0) {
-      const out: SeasonalInspirationItem[] = [];
-      items.forEach((row, i) => {
-        const n = normalizeSeasonalItem(row, `season-${i}`);
-        if (n) out.push(n);
-      });
-      if (out.length) return out;
-    }
+    const raw = (doc as { seasonalItems?: Partial<DefaultSeasonalItem>[] } | null)?.seasonalItems;
+    return mergeSeasonalItemsFromDb(Array.isArray(raw) ? raw : undefined);
   } catch {
-    /* fallback */
+    return mergeSeasonalItemsFromDb(undefined);
   }
-  return [...DEFAULT_SEASONAL_ITEMS];
 });
 
 export type SiteSettingsPayload = {
@@ -121,13 +188,7 @@ export async function getSiteSettingsForAdmin(): Promise<SiteSettingsPayload> {
         ogImageAlt?: string;
         seasonalItems?: Partial<DefaultSeasonalItem>[];
       };
-      const items: SeasonalInspirationItem[] = [];
-      if (Array.isArray(d.seasonalItems) && d.seasonalItems.length > 0) {
-        d.seasonalItems.forEach((row, i) => {
-          const n = normalizeSeasonalItem(row, `item-${i}`);
-          if (n) items.push(n);
-        });
-      }
+      const items = mergeSeasonalItemsFromDb(d.seasonalItems);
       const nm = String(d.name ?? "").trim() || DEFAULT_SITE_NAME;
       const ogImage = String(d.ogImage ?? "").trim() || DEFAULT_OG_IMAGE;
       return {
@@ -136,7 +197,7 @@ export async function getSiteSettingsForAdmin(): Promise<SiteSettingsPayload> {
         publicUrl: String(d.publicUrl ?? "").trim(),
         ogImage,
         ogImageAlt: String(d.ogImageAlt ?? "").trim(),
-        seasonalItems: items.length ? items : [...DEFAULT_SEASONAL_ITEMS],
+        seasonalItems: items,
       };
     }
   } catch {
@@ -148,7 +209,7 @@ export async function getSiteSettingsForAdmin(): Promise<SiteSettingsPayload> {
     publicUrl: "",
     ogImage: DEFAULT_OG_IMAGE,
     ogImageAlt: "",
-    seasonalItems: [...DEFAULT_SEASONAL_ITEMS],
+    seasonalItems: mergeSeasonalItemsFromDb(undefined),
   };
 }
 
@@ -173,16 +234,26 @@ export async function upsertSiteSettingsFromAdmin(body: unknown): Promise<SiteSe
 
   const rawItems = o.seasonalItems;
   const seasonalItems: SeasonalInspirationItem[] = [];
+
+  await connectDb();
+  const existingDoc = await SiteSettings.findOne({ key: "default" }).lean();
+  const existingRows =
+    (existingDoc as { seasonalItems?: Partial<DefaultSeasonalItem>[] } | null)?.seasonalItems ?? [];
+  const existingBySlug = new Map(existingRows.map((row) => [String(row.slug ?? "").trim(), row]));
+
   if (Array.isArray(rawItems)) {
     rawItems.forEach((row, i) => {
       if (!row || typeof row !== "object") return;
-      const n = normalizeSeasonalItem(row as Partial<DefaultSeasonalItem>, `item-${i}`);
+      const r = row as Partial<DefaultSeasonalItem>;
+      const slug = String(r.slug ?? "").trim();
+      const prev = slug ? existingBySlug.get(slug) : undefined;
+      const merged: Partial<DefaultSeasonalItem> = { ...(prev || {}), ...r };
+      const n = normalizeSeasonalItem(merged, `item-${i}`);
       if (n) seasonalItems.push(n);
     });
   }
   const finalSeasonal = seasonalItems.length ? seasonalItems : [...DEFAULT_SEASONAL_ITEMS];
 
-  await connectDb();
   await SiteSettings.findOneAndUpdate(
     { key: "default" },
     {
@@ -222,4 +293,45 @@ export async function seedSiteSettingsIfEmpty(defaults: SiteSettingsPayload): Pr
     ogImageAlt: defaults.ogImageAlt ?? "",
     seasonalItems: defaults.seasonalItems,
   });
+}
+
+export type SeasonalHubPageCopyPatch = Partial<
+  Pick<
+    SeasonalInspirationItem,
+    "pageIntro" | "storiesSectionTitle" | "newsletterCtaLabel" | "hubLinksIntro" | "extraHubLinks"
+  >
+>;
+
+/** Updates copy fields for one seasonal slug (does not replace whole Site Settings document). */
+export async function patchSeasonalHubPageCopy(slug: string, patch: SeasonalHubPageCopyPatch): Promise<void> {
+  const key = String(slug ?? "").trim();
+  if (!key) throw new Error("Missing slug");
+
+  await connectDb();
+  const doc = await SiteSettings.findOne({ key: "default" }).lean();
+  const rawStored = (doc as { seasonalItems?: Partial<DefaultSeasonalItem>[] } | null)?.seasonalItems;
+  const rows: SeasonalInspirationItem[] = mergeSeasonalItemsFromDb(
+    Array.isArray(rawStored) && rawStored.length > 0 ? rawStored : undefined,
+  ).map((r) => ({ ...r }));
+
+  const idx = rows.findIndex((r) => String(r.slug ?? "").trim() === key);
+  if (idx < 0) throw new Error("Season not found");
+
+  const cur = rows[idx]!;
+  const next: Partial<DefaultSeasonalItem> = { ...cur };
+  if (patch.pageIntro !== undefined) next.pageIntro = clampStr(patch.pageIntro, 12000);
+  if (patch.storiesSectionTitle !== undefined) next.storiesSectionTitle = clampStr(patch.storiesSectionTitle, 400);
+  if (patch.newsletterCtaLabel !== undefined) next.newsletterCtaLabel = clampStr(patch.newsletterCtaLabel, 240);
+  if (patch.hubLinksIntro !== undefined) next.hubLinksIntro = clampStr(patch.hubLinksIntro, 400);
+  if (patch.extraHubLinks !== undefined) next.extraHubLinks = normalizeExtraHubLinks(patch.extraHubLinks);
+
+  const normalized = normalizeSeasonalItem(next, key);
+  if (!normalized) throw new Error("Invalid seasonal row");
+  rows[idx] = normalized;
+
+  await SiteSettings.findOneAndUpdate(
+    { key: "default" },
+    { $set: { seasonalItems: rows } },
+    { upsert: true, new: true },
+  );
 }

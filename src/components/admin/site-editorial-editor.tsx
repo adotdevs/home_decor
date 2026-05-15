@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { HeroSlideConfig } from "@/config/home-editorial-defaults";
 import { shopTheLook } from "@/config/curations";
 import type { HomeEditorialResolved, ShopTheLookItem } from "@/services/site-editorial-service";
-import { categoryTree } from "@/config/site";
+import type { CategoryTreeTop } from "@/services/category-service";
 import { ImageAltField } from "@/components/admin/image-alt-field";
 import { adminUploadMedia } from "@/lib/client/admin-media-upload";
 import { resolveHeroSlideAlt, resolveShopTheLookImageAlt } from "@/lib/image-alt";
@@ -29,16 +29,6 @@ function linesToArticleSlugs(raw: string): string[] {
     })
     .filter(Boolean);
 }
-
-const BANNER_LINK_PRESETS: { label: string; href: string }[] = [
-  { label: "Homepage", href: "/" },
-  { label: "Latest stories", href: "/latest" },
-  { label: "Trending ideas", href: "/trending" },
-  { label: "Inspiration gallery", href: "/inspiration-gallery" },
-  { label: "Inspiration feed", href: "/inspiration/feed" },
-  { label: "Newsletter", href: "/newsletter" },
-  ...categoryTree.map((c) => ({ label: `${c.name} ideas`, href: `/category/${c.slug}` })),
-];
 
 function emptySlide(): HeroSlideConfig {
   return { src: "", alt: "", href: "/", kicker: "", headline: "", dek: "", detail: "" };
@@ -102,8 +92,16 @@ function StoryLinksArea({
   );
 }
 
-function BannerLinkPicker({ href, onChange }: { href: string; onChange: (h: string) => void }) {
-  const isPreset = BANNER_LINK_PRESETS.some((p) => p.href === href);
+function BannerLinkPicker({
+  href,
+  onChange,
+  linkPresets,
+}: {
+  href: string;
+  onChange: (h: string) => void;
+  linkPresets: { label: string; href: string }[];
+}) {
+  const isPreset = linkPresets.some((p) => p.href === href);
   const selectValue = isPreset ? href : "__other__";
   return (
     <div className="space-y-2">
@@ -120,7 +118,7 @@ function BannerLinkPicker({ href, onChange }: { href: string; onChange: (h: stri
           onChange(v);
         }}
       >
-        {BANNER_LINK_PRESETS.map((p) => (
+        {linkPresets.map((p) => (
           <option key={p.href} value={p.href}>
             {p.label}
           </option>
@@ -139,7 +137,45 @@ function BannerLinkPicker({ href, onChange }: { href: string; onChange: (h: stri
   );
 }
 
-export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolved }) {
+export function SiteEditorialEditor({
+  initial,
+  categoryTree: categoryTreeProp,
+}: {
+  initial: HomeEditorialResolved;
+  categoryTree: CategoryTreeTop[];
+}) {
+  const [categoryTree, setCategoryTree] = useState<CategoryTreeTop[]>(categoryTreeProp);
+
+  useEffect(() => {
+    setCategoryTree(categoryTreeProp);
+  }, [categoryTreeProp]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/categories", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { tree?: CategoryTreeTop[] }) => {
+        if (cancelled || !Array.isArray(d.tree)) return;
+        setCategoryTree(d.tree);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const bannerLinkPresets = useMemo(
+    () => [
+      { label: "Homepage", href: "/" },
+      { label: "Latest stories", href: "/latest" },
+      { label: "Trending ideas", href: "/trending" },
+      { label: "Inspiration gallery", href: "/inspiration-gallery" },
+      { label: "Inspiration feed", href: "/inspiration/feed" },
+      { label: "Newsletter", href: "/newsletter" },
+      ...categoryTree.map((c) => ({ label: `${c.name} ideas`, href: `/category/${c.slug}` })),
+    ],
+    [categoryTree],
+  );
   const [heroSlides, setHeroSlides] = useState<HeroSlideConfig[]>(() => initial.heroSlides.map((s) => ({ ...s })));
   const [shopTheLookItems, setShopTheLookItems] = useState<ShopTheLookItem[]>(() =>
     initial.shopTheLookItems.map((x) => ({
@@ -179,6 +215,9 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
   const [relatedStoriesTitle, setRelatedStoriesTitle] = useState(initial.relatedStoriesTitle);
   const [categoryPopularSearchesTitle, setCategoryPopularSearchesTitle] = useState(
     initial.categoryPopularSearchesTitle,
+  );
+  const [categoryRelatedStoriesTitle, setCategoryRelatedStoriesTitle] = useState(
+    initial.categoryRelatedStoriesTitle,
   );
   const [newsletterReadersSayTitle, setNewsletterReadersSayTitle] = useState(initial.newsletterReadersSayTitle);
   const [searchIntroEyebrow, setSearchIntroEyebrow] = useState(initial.searchIntroEyebrow);
@@ -287,6 +326,7 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
         homepageTrustBody: homepageTrustBody.trim(),
         relatedStoriesTitle: relatedStoriesTitle.trim(),
         categoryPopularSearchesTitle: categoryPopularSearchesTitle.trim(),
+        categoryRelatedStoriesTitle: categoryRelatedStoriesTitle.trim(),
         newsletterReadersSayTitle: newsletterReadersSayTitle.trim(),
         searchIntroEyebrow: searchIntroEyebrow.trim(),
         searchIntroTitle: searchIntroTitle.trim(),
@@ -465,7 +505,11 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
                     autoPreviewUrl={s.src || undefined}
                   />
                   <div className="sm:col-span-2">
-                    <BannerLinkPicker href={s.href} onChange={(h) => updateSlide(i, { href: h })} />
+                    <BannerLinkPicker
+                      href={s.href}
+                      onChange={(h) => updateSlide(i, { href: h })}
+                      linkPresets={bannerLinkPresets}
+                    />
                   </div>
                 </div>
               </div>
@@ -571,7 +615,11 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
                     autoPreviewContext={{ cardTitle: row.title, cardCaption: row.caption }}
                     autoPreviewUrl={row.image || undefined}
                   />
-                  <BannerLinkPicker href={row.href} onChange={(h) => updateShopItem(i, { href: h })} />
+                  <BannerLinkPicker
+                    href={row.href}
+                    onChange={(h) => updateShopItem(i, { href: h })}
+                    linkPresets={bannerLinkPresets}
+                  />
                 </div>
               </div>
               {shopTheLookItems.length > 1 ? (
@@ -846,6 +894,16 @@ export function SiteEditorialEditor({ initial }: { initial: HomeEditorialResolve
               className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
               value={categoryPopularSearchesTitle}
               onChange={(e) => setCategoryPopularSearchesTitle(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium">
+              Category hub — related reads title (analytics; {`{category}`} allowed)
+            </span>
+            <input
+              className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+              value={categoryRelatedStoriesTitle}
+              onChange={(e) => setCategoryRelatedStoriesTitle(e.target.value)}
             />
           </label>
           <label className="block sm:col-span-2">

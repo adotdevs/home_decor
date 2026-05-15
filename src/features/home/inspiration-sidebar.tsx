@@ -2,8 +2,9 @@ import Link from "next/link";
 import { AdSlot } from "@/components/ads/ad-slot";
 import type { DefaultSeasonalItem } from "@/config/site-defaults";
 import { MotionSurface } from "@/features/home/motion-surface";
+import { getAdByPlacement } from "@/services/ad-service";
 
-export function InspirationSidebar({
+export async function InspirationSidebar({
   seasonalItems,
   seasonalLabel = "Seasonal guides",
   newsletterKicker = "Newsletter",
@@ -16,17 +17,25 @@ export function InspirationSidebar({
   newsletterTitle?: string;
   newsletterDek?: string;
 }) {
+  const sidebarAd = await getAdByPlacement("sidebar");
+  const hasSidebarAd = Boolean(
+    sidebarAd && String((sidebarAd as { code?: string }).code ?? "").trim().length > 0,
+  );
+  const swipeHint = hasSidebarAd
+    ? "Swipe — newsletter · partners · seasons"
+    : "Swipe — newsletter · seasons";
+
   return (
     <aside className="order-1 lg:order-2 lg:col-span-1">
       <p className="mb-3 pl-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground lg:hidden">
-        Swipe — newsletter · partners · seasons
+        {swipeHint}
       </p>
       <div
-        className="no-scrollbar flex min-w-0 w-full max-w-full snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden pb-1 lg:flex-col lg:gap-6 lg:overflow-visible lg:pb-0"
-        style={{ scrollPaddingInline: "1rem" }}
+        className="no-scrollbar flex min-w-0 w-full max-w-full snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 ps-0 pe-4 [scrollbar-gutter:stable] lg:flex-col lg:gap-6 lg:overflow-visible lg:pb-0 lg:pe-0"
+        style={{ scrollPaddingInlineEnd: "max(1rem, env(safe-area-inset-right))" }}
       >
         <MotionSurface
-          className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center rounded-3xl border border-black/5 bg-card/90 p-5 shadow-sm backdrop-blur-sm sm:w-[min(22rem,calc(100vw-3rem))] lg:w-full lg:min-w-0 lg:shrink lg:snap-none"
+          className="w-[min(21rem,90%)] max-w-full shrink-0 snap-start snap-always rounded-3xl border border-black/5 bg-card/90 p-5 shadow-sm backdrop-blur-sm sm:w-[min(22rem,90%)] lg:w-full lg:min-w-0 lg:shrink lg:snap-none lg:snap-normal"
           delay={0}
         >
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{newsletterKicker}</p>
@@ -40,19 +49,21 @@ export function InspirationSidebar({
           </Link>
         </MotionSurface>
 
-        <MotionSurface
-          className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center sm:w-[min(22rem,calc(100vw-3rem))] lg:w-full lg:min-w-0 lg:shrink lg:snap-none"
-          delay={0.06}
-          hoverLift={false}
-        >
-          <div className="overflow-hidden rounded-3xl border border-black/5 bg-card/50 shadow-sm transition-shadow duration-300 hover:shadow-md">
-            <AdSlot placement="sidebar" />
-          </div>
-        </MotionSurface>
+        {hasSidebarAd ? (
+          <MotionSurface
+            className="w-[min(21rem,90%)] max-w-full shrink-0 snap-start snap-always sm:w-[min(22rem,90%)] lg:w-full lg:min-w-0 lg:shrink lg:snap-none lg:snap-normal"
+            delay={0.06}
+            hoverLift={false}
+          >
+            <div className="overflow-hidden rounded-3xl border border-black/5 bg-card/50 shadow-sm transition-shadow duration-300 hover:shadow-md">
+              <AdSlot placement="sidebar" ad={sidebarAd} />
+            </div>
+          </MotionSurface>
+        ) : null}
 
         <MotionSurface
-          className="w-[min(21rem,calc(100vw-2.5rem))] shrink-0 snap-center rounded-3xl border border-black/5 bg-muted/40 p-5 backdrop-blur-sm sm:w-[min(22rem,calc(100vw-3rem))] lg:w-full lg:min-w-0 lg:shrink lg:snap-none"
-          delay={0.12}
+          className="w-[min(21rem,90%)] max-w-full shrink-0 snap-start snap-always rounded-3xl border border-black/5 bg-muted/40 p-5 backdrop-blur-sm sm:w-[min(22rem,90%)] lg:w-full lg:min-w-0 lg:shrink lg:snap-none lg:snap-normal"
+          delay={hasSidebarAd ? 0.12 : 0.06}
           hoverShadow="0 18px 36px -20px rgba(0,0,0,0.2)"
         >
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{seasonalLabel}</p>

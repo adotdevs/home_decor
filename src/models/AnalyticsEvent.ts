@@ -33,6 +33,9 @@ const AnalyticsEventSchema = new Schema(
     os: { type: String, default: "" },
     trafficSource: { type: String, default: "direct", index: true },
     referrerHost: { type: String, default: "" },
+    /** Dedupe / idempotency helper for retries (optional) */
+    idempotencyKey: { type: String, default: "", index: true },
+    pageTitle: { type: String, default: "" },
     occurredAt: { type: Date, required: true, index: true },
     serverReceivedAt: { type: Date, default: Date.now, index: true },
   },
@@ -41,6 +44,7 @@ const AnalyticsEventSchema = new Schema(
 
 AnalyticsEventSchema.index({ occurredAt: -1, type: 1 });
 AnalyticsEventSchema.index({ sessionKey: 1, occurredAt: -1 });
+AnalyticsEventSchema.index({ sessionKey: 1, type: 1, path: 1, idempotencyKey: 1 });
 AnalyticsEventSchema.index({ "searchQuery": 1, occurredAt: -1 });
 
 export type AnalyticsEventType = (typeof EVENT_TYPES)[number];

@@ -67,6 +67,8 @@ const SiteEditorialConfigSchema = new Schema(
     relatedStoriesTitle: String,
     /** Category hub “popular searches” — use `{category}` for hub display name */
     categoryPopularSearchesTitle: String,
+    /** Category / sub-hub “related reads” (analytics) — `{category}` */
+    categoryRelatedStoriesTitle: String,
     newsletterReadersSayTitle: String,
     searchIntroEyebrow: String,
     searchIntroTitle: String,
@@ -119,6 +121,7 @@ export type SiteEditorialConfigLean = {
   homepageTrustBody?: string;
   relatedStoriesTitle?: string;
   categoryPopularSearchesTitle?: string;
+  categoryRelatedStoriesTitle?: string;
   newsletterReadersSayTitle?: string;
   searchIntroEyebrow?: string;
   searchIntroTitle?: string;

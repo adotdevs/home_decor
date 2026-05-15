@@ -1,20 +1,25 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { shouldSkipClientAnalytics } from "@/lib/analytics/client-filter";
+import {
+  ANALYTICS_DOC_REF_KEY,
+  ANALYTICS_LANDING_KEY,
+  ANALYTICS_LAST_ENGAGED_AT_KEY,
+  ANALYTICS_SESSION_KEY,
+  ANALYTICS_VISITOR_COOKIE,
+  ANALYTICS_VISITOR_KEY,
+  CLIENT_GEO_CACHE_KEY,
+} from "@/lib/analytics/storage-keys";
+import type { IngestAttribution } from "@/services/analytics-ingest-service";
 
-const VISITOR_KEY = "hd_analytics_vid";
-const VISITOR_COOKIE = "hd_analytics_vid";
-const SESSION_KEY = "hd_analytics_sid";
-const SESSION_EXPIRES_KEY = "hd_analytics_sxp";
-/** One-shot geo from GET /api/analytics/client-geo; avoids repeat IP API calls */
-const CLIENT_GEO_KEY = "hd_analytics_geo_v1";
 const SESSION_IDLE_MS = 30 * 60 * 1000;
-/** Keeps lastActivityAt fresh on the server while a tab is visible */
-const PRESENCE_INTERVAL_MS = 45 * 1000;
+const HEARTBEAT_MIN_MS = 55 * 1000;
+const HEARTBEAT_INTERVAL_MS = 60 * 1000;
 const FLUSH_INTERVAL_MS = 4000;
-const PAGE_VIEW_DEDUPE_MS = 3000;
-const CLICK_DEDUPE_MS = 800;
+const PAGE_VIEW_DEDUPE_MS = 4500;
+const CLICK_DEDUPE_MS = 1200;
 const BATCH_MAX = 12;
 
 function uuid(): string {
@@ -22,7 +27,7 @@ function uuid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-function storageGet(key: string): string | null {
+function lsGet(key: string): string | null {
   try {
     return localStorage.getItem(key);
   } catch {
@@ -30,11 +35,35 @@ function storageGet(key: string): string | null {
   }
 }
 
-function storageSet(key: string, val: string): void {
+function lsSet(key: string, val: string): void {
   try {
     localStorage.setItem(key, val);
   } catch {
     /* private mode */
+  }
+}
+
+function ssGet(key: string): string | null {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function ssSet(key: string, val: string): void {
+  try {
+    sessionStorage.setItem(key, val);
+  } catch {
+    /* private mode */
+  }
+}
+
+function ssRemove(key: string): void {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -46,7 +75,7 @@ function readVidCookie(): string | null {
       const i = p.indexOf("=");
       if (i === -1) continue;
       const k = p.slice(0, i);
-      if (k !== VISITOR_COOKIE) continue;
+      if (k !== ANALYTICS_VISITOR_COOKIE) continue;
       const v = decodeURIComponent(p.slice(i + 1));
       return v.length >= 8 ? v : null;
     }
@@ -60,7 +89,7 @@ function writeVidCookie(vid: string): void {
   try {
     if (typeof document === "undefined") return;
     const secure = globalThis.location?.protocol === "https:";
-    document.cookie = `${VISITOR_COOKIE}=${encodeURIComponent(vid)}; Path=/; Max-Age=31536000; SameSite=Lax${secure ? "; Secure" : ""}`;
+    document.cookie = `${ANALYTICS_VISITOR_COOKIE}=${encodeURIComponent(vid)}; Path=/; Max-Age=31536000; SameSite=Lax${secure ? "; Secure" : ""}`;
   } catch {
     /* ignore */
   }
@@ -68,11 +97,11 @@ function writeVidCookie(vid: string): void {
 
 function sendPresence(visitorKey: string, sessionKey: string): void {
   if (typeof document === "undefined") return;
-  const visible = document.visibilityState === "visible";
+  if (document.visibilityState !== "visible") return;
   void fetch("/api/analytics/presence", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ visitorKey, sessionKey, visible }),
+    body: JSON.stringify({ visitorKey, sessionKey, visible: true }),
     keepalive: true,
   }).catch(() => {});
 }
@@ -99,6 +128,8 @@ type Queued = {
   resultCount?: number;
   dwellMs?: number;
   scrollMaxPct?: number;
+  pageTitle?: string;
+  idempotencyKey?: string;
 };
 
 function pathMeta(pathname: string): { articleSlug?: string; categorySlug?: string } {
@@ -111,19 +142,51 @@ function pathMeta(pathname: string): { articleSlug?: string; categorySlug?: stri
   return {};
 }
 
-function flushQueue(
-  visitorKey: string,
-  sessionKey: string,
-  referrer: string,
-  queue: Queued[],
-): void {
+function readAttributionPayload(): IngestAttribution | null {
+  if (typeof window === "undefined") return null;
+  const siteHost = window.location.hostname;
+  const docRef = ssGet(ANALYTICS_DOC_REF_KEY) ?? "";
+  const rawLand = ssGet(ANALYTICS_LANDING_KEY);
+  let pathname = window.location.pathname;
+  let search = window.location.search || "";
+  if (rawLand) {
+    try {
+      const j = JSON.parse(rawLand) as { pathname?: string; search?: string };
+      if (typeof j.pathname === "string") pathname = j.pathname;
+      if (typeof j.search === "string") search = j.search;
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!siteHost) return null;
+  const landingSearch = search.startsWith("?") ? search.slice(1) : search;
+  return {
+    documentReferrer: docRef,
+    landingPathname: pathname,
+    landingSearch,
+    siteHost,
+  };
+}
+
+function captureNewSessionContext(): void {
+  if (typeof window === "undefined") return;
+  ssSet(ANALYTICS_DOC_REF_KEY, document.referrer || "");
+  ssSet(
+    ANALYTICS_LANDING_KEY,
+    JSON.stringify({ pathname: window.location.pathname, search: window.location.search || "" }),
+  );
+}
+
+function flushQueue(visitorKey: string, sessionKey: string, referrer: string, queue: Queued[]): void {
   if (!queue.length) return;
   const batch = queue.splice(0, BATCH_MAX);
   const geo = clientGeoCache.v;
+  const attribution = readAttributionPayload();
   const body = JSON.stringify({
     visitorKey,
     sessionKey,
     referrer: referrer || "",
+    ...(attribution ? { attribution } : {}),
     ...(geo?.country ? { clientGeo: geo } : {}),
     events: batch,
   });
@@ -145,56 +208,90 @@ function flushQueue(
  */
 export function AnalyticsProvider() {
   const pathname = usePathname() || "/";
-  const searchParams = useSearchParams();
+  const sp = useSearchParams();
+  const queryKey = sp?.toString() ?? "";
+
   const queueRef = useRef<Queued[]>([]);
   const visitorRef = useRef<string>("");
   const sessionRef = useRef<string>("");
-  const lastPvRef = useRef<{ path: string; t: number } | null>(null);
-  const lastClickRef = useRef<{ href: string; t: number } | null>(null);
+  const lastClickSigRef = useRef<{ sig: string; t: number } | null>(null);
   const articleEnterRef = useRef<{ slug: string; t: number } | null>(null);
   const scrollMaxRef = useRef<number>(0);
-  const isAdmin = pathname.startsWith("/admin");
+  const lastHbAtRef = useRef<number>(0);
+  const listenersBoundRef = useRef(false);
 
-  const ensureIds = useCallback(() => {
-    let vid = storageGet(VISITOR_KEY);
+  const isAdmin = pathname.startsWith("/admin");
+  const skip = isAdmin || shouldSkipClientAnalytics();
+
+  const fullPath = useMemo(() => (queryKey ? `${pathname}?${queryKey}` : pathname), [pathname, queryKey]);
+
+  const ensureVisitorKey = useCallback((): string => {
+    let vid = lsGet(ANALYTICS_VISITOR_KEY);
     if (!vid || vid.length < 8) {
       vid = readVidCookie();
     }
     if (!vid || vid.length < 8) {
       vid = uuid();
     }
-    storageSet(VISITOR_KEY, vid);
+    lsSet(ANALYTICS_VISITOR_KEY, vid);
     writeVidCookie(vid);
     visitorRef.current = vid;
-
-    let sid = storageGet(SESSION_KEY);
-    let exp = Number(storageGet(SESSION_EXPIRES_KEY) || "0");
-    const now = Date.now();
-    if (!sid || sid.length < 8 || now > exp) {
-      sid = uuid();
-      storageSet(SESSION_KEY, sid);
-      exp = now + SESSION_IDLE_MS;
-      storageSet(SESSION_EXPIRES_KEY, String(exp));
-      sessionRef.current = sid;
-      return { visitorKey: vid, sessionKey: sid, isNewSession: true };
-    }
-    sessionRef.current = sid;
-    exp = now + SESSION_IDLE_MS;
-    storageSet(SESSION_EXPIRES_KEY, String(exp));
-    return { visitorKey: vid, sessionKey: sid, isNewSession: false };
+    return vid;
   }, []);
 
+  const getOrCreateBrowserSession = useCallback((): { sessionKey: string; isNew: boolean } => {
+    const now = Date.now();
+    let sid = ssGet(ANALYTICS_SESSION_KEY);
+    const lastEng = ssGet(ANALYTICS_LAST_ENGAGED_AT_KEY);
+    const lastTs = lastEng ? Number(lastEng) : 0;
+
+    const idleExpired = lastTs > 0 && now - lastTs > SESSION_IDLE_MS;
+    const invalid = !sid || sid.length < 8;
+
+    if (invalid || idleExpired) {
+      sid = uuid();
+      ssSet(ANALYTICS_SESSION_KEY, sid);
+      ssRemove(ANALYTICS_LAST_ENGAGED_AT_KEY);
+      captureNewSessionContext();
+      sessionRef.current = sid;
+      return { sessionKey: sid, isNew: true };
+    }
+    const activeSid = sid as string;
+    sessionRef.current = activeSid;
+    return { sessionKey: activeSid, isNew: false };
+  }, []);
+
+  const recordEngagement = useCallback((): void => {
+    ssSet(ANALYTICS_LAST_ENGAGED_AT_KEY, String(Date.now()));
+  }, []);
+
+  const sessionReferrer = useCallback((): string => ssGet(ANALYTICS_DOC_REF_KEY) || "", []);
+
   const scheduleFlush = useCallback(() => {
-    if (isAdmin) return;
-    const { visitorKey, sessionKey } = ensureIds();
-    const ref = typeof document !== "undefined" ? document.referrer : "";
-    flushQueue(visitorKey, sessionKey, ref, queueRef.current);
-  }, [ensureIds, isAdmin]);
+    if (skip) return;
+    const vk = visitorRef.current || ensureVisitorKey();
+    const sk = sessionRef.current;
+    if (!sk) return;
+    flushQueue(vk, sk, sessionReferrer(), queueRef.current);
+  }, [ensureVisitorKey, sessionReferrer, skip]);
+
+  const shouldSkipPageView = useCallback((pathKey: string): boolean => {
+    const now = Date.now();
+    const storageKey = `hd_analytics_pv:${pathKey}`;
+    try {
+      const prev = ssGet(storageKey);
+      if (prev && now - Number(prev) < PAGE_VIEW_DEDUPE_MS) return true;
+      ssSet(storageKey, String(now));
+    } catch {
+      return false;
+    }
+    return false;
+  }, []);
 
   useEffect(() => {
-    if (isAdmin) return;
+    if (skip) return;
     try {
-      const raw = localStorage.getItem(CLIENT_GEO_KEY);
+      const raw = localStorage.getItem(CLIENT_GEO_CACHE_KEY);
       if (raw) {
         const j = JSON.parse(raw) as Partial<ClientGeoPayload>;
         if (typeof j.country === "string" && j.country.length === 2) {
@@ -223,69 +320,78 @@ export function AnalyticsProvider() {
         };
         clientGeoCache.v = snap;
         try {
-          localStorage.setItem(CLIENT_GEO_KEY, JSON.stringify(snap));
+          localStorage.setItem(CLIENT_GEO_CACHE_KEY, JSON.stringify(snap));
         } catch {
           /* private mode */
         }
       })
       .catch(() => {});
-  }, [isAdmin]);
+  }, [skip]);
 
   useEffect(() => {
-    if (isAdmin) return;
+    if (skip) return;
+    if (listenersBoundRef.current) return;
+    listenersBoundRef.current = true;
 
     const tick = window.setInterval(() => {
       scheduleFlush();
     }, FLUSH_INTERVAL_MS);
 
-    const onHidden = () => scheduleFlush();
-    document.addEventListener("visibilitychange", onHidden);
+    const onVisibilityFlush = () => {
+      if (document.visibilityState === "hidden") scheduleFlush();
+    };
+
+    const onPageHide = () => scheduleFlush();
+
+    document.addEventListener("visibilitychange", onVisibilityFlush);
+    window.addEventListener("pagehide", onPageHide);
 
     return () => {
+      listenersBoundRef.current = false;
       window.clearInterval(tick);
-      document.removeEventListener("visibilitychange", onHidden);
+      document.removeEventListener("visibilitychange", onVisibilityFlush);
+      window.removeEventListener("pagehide", onPageHide);
       scheduleFlush();
     };
-  }, [isAdmin, scheduleFlush]);
+  }, [skip, scheduleFlush]);
 
   useEffect(() => {
-    if (isAdmin) return;
+    if (skip) return;
+    let iv: number | null = null;
 
     const pulse = () => {
-      const { visitorKey, sessionKey } = ensureIds();
-      sendPresence(visitorKey, sessionKey);
+      const now = Date.now();
+      if (now - lastHbAtRef.current < HEARTBEAT_MIN_MS) return;
+      lastHbAtRef.current = now;
+      const vk = visitorRef.current || ensureVisitorKey();
+      const sk = sessionRef.current;
+      if (vk && sk) sendPresence(vk, sk);
     };
 
-    const iv = window.setInterval(pulse, PRESENCE_INTERVAL_MS);
-    const onVisible = () => {
+    iv = window.setInterval(pulse, HEARTBEAT_INTERVAL_MS);
+    const onVis = () => {
       if (document.visibilityState === "visible") pulse();
     };
-    document.addEventListener("visibilitychange", onVisible);
-    const boot = window.setTimeout(pulse, 5000);
+    document.addEventListener("visibilitychange", onVis);
+    const boot = window.setTimeout(pulse, HEARTBEAT_INTERVAL_MS);
 
     return () => {
-      window.clearInterval(iv);
+      if (iv != null) window.clearInterval(iv);
       window.clearTimeout(boot);
-      document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("visibilitychange", onVis);
     };
-  }, [isAdmin, ensureIds]);
+  }, [skip, ensureVisitorKey]);
 
   useEffect(() => {
-    if (isAdmin) return;
-    const ids = ensureIds();
+    if (skip) return;
+    /** Spec / browsers may use `prerender`; lib.dom typing can lag. */
+    if (typeof document !== "undefined" && String(document.visibilityState) === "prerender") return;
+    if (shouldSkipPageView(fullPath)) return;
+
+    ensureVisitorKey();
     const now = Date.now();
-    const qs = searchParams?.toString() || "";
-    const fullPath = qs ? `${pathname}?${qs}` : pathname;
-
-    const dup =
-      lastPvRef.current &&
-      lastPvRef.current.path === fullPath &&
-      now - lastPvRef.current.t < PAGE_VIEW_DEDUPE_MS;
-    if (dup) return;
-
-    lastPvRef.current = { path: fullPath, t: now };
-
-    const { visitorKey, sessionKey, isNewSession } = ids;
+    const { sessionKey, isNew } = getOrCreateBrowserSession();
+    const visitorKey = visitorRef.current;
 
     const meta = pathMeta(pathname);
     const prevArticle = articleEnterRef.current;
@@ -309,11 +415,15 @@ export function AnalyticsProvider() {
       articleEnterRef.current = null;
     }
 
-    if (isNewSession) {
+    const idempotencyKey = `${sessionKey}|pv|${fullPath}|${Math.floor(now / PAGE_VIEW_DEDUPE_MS)}`;
+    const pageTitle = typeof document !== "undefined" ? document.title : "";
+
+    if (isNew) {
       queueRef.current.push({
         type: "session_start",
         path: fullPath,
         ts: now,
+        pageTitle,
         ...pathMeta(pathname),
       });
     }
@@ -322,17 +432,30 @@ export function AnalyticsProvider() {
       type: "page_view",
       path: fullPath,
       ts: now,
+      pageTitle,
+      idempotencyKey,
       ...pathMeta(pathname),
     });
 
+    recordEngagement();
+
     if (queueRef.current.length >= BATCH_MAX) {
-      const ref = typeof document !== "undefined" ? document.referrer : "";
-      flushQueue(visitorKey, sessionKey, ref, queueRef.current);
+      flushQueue(visitorKey, sessionKey, sessionReferrer(), queueRef.current);
     }
-  }, [pathname, searchParams, ensureIds, isAdmin]);
+  }, [
+    skip,
+    pathname,
+    queryKey,
+    fullPath,
+    ensureVisitorKey,
+    getOrCreateBrowserSession,
+    recordEngagement,
+    shouldSkipPageView,
+    sessionReferrer,
+  ]);
 
   useEffect(() => {
-    if (isAdmin) return;
+    if (skip) return;
     const meta = pathMeta(pathname);
     if (!meta.articleSlug) return;
     const onScroll = () => {
@@ -344,52 +467,73 @@ export function AnalyticsProvider() {
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [pathname, isAdmin]);
+  }, [pathname, skip]);
 
   useEffect(() => {
-    if (isAdmin) return;
+    if (skip) return;
     const onClick = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
-      const a = t?.closest?.("a[href]") as HTMLAnchorElement | null;
-      if (!a) return;
-      const href = a.getAttribute("href") || "";
-      if (!href || href.startsWith("#")) return;
 
-      const now = Date.now();
-      const dup =
-        lastClickRef.current &&
-        lastClickRef.current.href === href &&
-        now - lastClickRef.current.t < CLICK_DEDUPE_MS;
-      if (dup) return;
-      lastClickRef.current = { href, t: now };
+      const trackedAnchor = t?.closest?.(
+        'a[href]:not([href^="#"])',
+      ) as HTMLAnchorElement | null;
+      const trackedButton = trackedAnchor
+        ? null
+        : (t?.closest?.(
+            "button[data-analytics-kind], [role='button'][data-analytics-kind], [data-analytics-click]",
+          ) as HTMLElement | null);
 
+      let href = "";
+      let linkText = "";
       let clickKind = "internal_nav";
-      const explicit = a.closest("[data-analytics-kind]")?.getAttribute("data-analytics-kind");
-      if (explicit) clickKind = explicit;
 
-      const isExternal =
-        /^https?:\/\//i.test(href) &&
-        typeof window !== "undefined" &&
-        !href.startsWith(window.location.origin);
-      if (isExternal) clickKind = "external";
+      if (trackedAnchor) {
+        href = trackedAnchor.getAttribute("href") || "";
+        if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+        linkText = (trackedAnchor.textContent || "").trim().slice(0, 200);
+        const explicit = trackedAnchor.closest("[data-analytics-kind]")?.getAttribute("data-analytics-kind");
+        if (explicit) clickKind = explicit;
+        const isExternal =
+          /^https?:\/\//i.test(href) && typeof window !== "undefined" && !href.startsWith(window.location.origin);
+        if (isExternal) clickKind = "external";
+      } else if (trackedButton) {
+        clickKind = trackedButton.getAttribute("data-analytics-kind") || "cta";
+        href = trackedButton.getAttribute("data-analytics-href") || trackedButton.getAttribute("href") || "";
+        linkText = (trackedButton.textContent || "").trim().slice(0, 200);
+      } else {
+        return;
+      }
 
-      const { visitorKey, sessionKey } = ensureIds();
+      const sig = `${clickKind}|${href}|${linkText.slice(0, 40)}`;
+      const ts = Date.now();
+      const dup =
+        lastClickSigRef.current &&
+        lastClickSigRef.current.sig === sig &&
+        ts - lastClickSigRef.current.t < CLICK_DEDUPE_MS;
+      if (dup) return;
+      lastClickSigRef.current = { sig, t: ts };
+
+      ensureVisitorKey();
+      const { sessionKey } = getOrCreateBrowserSession();
+      const visitorKey = visitorRef.current;
+      if (!sessionKey) return;
+
+      recordEngagement();
       queueRef.current.push({
         type: "click",
         path: pathname,
         href,
         clickKind,
-        linkText: (a.textContent || "").trim().slice(0, 200),
-        ts: now,
+        linkText,
+        ts,
       });
       if (queueRef.current.length >= BATCH_MAX) {
-        const ref = typeof document !== "undefined" ? document.referrer : "";
-        flushQueue(visitorKey, sessionKey, ref, queueRef.current);
+        flushQueue(visitorKey, sessionKey, sessionReferrer(), queueRef.current);
       }
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [pathname, ensureIds, isAdmin]);
+  }, [pathname, ensureVisitorKey, getOrCreateBrowserSession, recordEngagement, sessionReferrer, skip]);
 
   return null;
 }

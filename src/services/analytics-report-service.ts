@@ -7,6 +7,22 @@ import type { AnalyticsDashboard } from "@/types/analytics-dashboard";
 
 const LIVE_SESSION_WINDOW_MS = 5 * 60 * 1000;
 const LIVE_VISITOR_WINDOW_MS = 3 * 60 * 1000;
+const SESSION_DURATION_MIN_SEC = 2;
+const SESSION_DURATION_MAX_SEC = 4 * 60 * 60;
+
+function liveSessionFilter(since: Date) {
+  return {
+    $or: [
+      { lastSeenLiveAt: { $gte: since } },
+      {
+        $and: [
+          { $or: [{ lastSeenLiveAt: { $exists: false } }, { lastSeenLiveAt: null }] },
+          { lastActivityAt: { $gte: since } },
+        ],
+      },
+    ],
+  };
+}
 
 export type { AnalyticsDashboard } from "@/types/analytics-dashboard";
 
@@ -17,8 +33,14 @@ export async function getAnalyticsDashboard(days: number): Promise<AnalyticsDash
   const msPerDay = 24 * 60 * 60 * 1000;
   const sinceDay = new Date(Math.floor(since.getTime() / msPerDay) * msPerDay);
 
+  const liveCut = new Date(Date.now() - LIVE_SESSION_WINDOW_MS);
+  const liveVisitorCut = new Date(Date.now() - LIVE_VISITOR_WINDOW_MS);
+  const liveOr = liveSessionFilter(liveCut);
+  const liveVisitorOr = liveSessionFilter(liveVisitorCut);
+
   const [
     sessions,
+    sessionsWithClick,
     uniqueVisitorKeys,
     pageViews,
     clicks,
@@ -42,6 +64,7 @@ export async function getAnalyticsDashboard(days: number): Promise<AnalyticsDash
     topSearchesFromApi,
   ] = await Promise.all([
     AnalyticsSession.countDocuments({ startedAt: { $gte: since } }),
+    AnalyticsSession.countDocuments({ startedAt: { $gte: since }, clicks: { $gte: 1 } }),
     AnalyticsSession.distinct("visitorKey", { startedAt: { $gte: since } }),
     AnalyticsEvent.countDocuments({ type: "page_view", occurredAt: { $gte: since } }),
     AnalyticsEvent.countDocuments({ type: "click", occurredAt: { $gte: since } }),
@@ -60,15 +83,19 @@ export async function getAnalyticsDashboard(days: number): Promise<AnalyticsDash
           },
         },
       },
+      {
+        $match: {
+          sec: {
+            $gte: SESSION_DURATION_MIN_SEC,
+            $lte: SESSION_DURATION_MAX_SEC,
+          },
+        },
+      },
       { $group: { _id: null, avgSec: { $avg: "$sec" } } },
     ]),
     AnalyticsSession.countDocuments({ startedAt: { $gte: since }, isBounce: true }),
-    AnalyticsSession.countDocuments({
-      lastActivityAt: { $gte: new Date(Date.now() - LIVE_SESSION_WINDOW_MS) },
-    }),
-    AnalyticsSession.distinct("visitorKey", {
-      lastActivityAt: { $gte: new Date(Date.now() - LIVE_VISITOR_WINDOW_MS) },
-    }),
+    AnalyticsSession.countDocuments(liveOr),
+    AnalyticsSession.distinct("visitorKey", liveVisitorOr),
     AnalyticsEvent.aggregate<{ _id: string; count: number }>([
       { $match: { type: "page_view", occurredAt: { $gte: since } } },
       { $group: { _id: "$path", count: { $sum: 1 } } },
@@ -158,7 +185,19 @@ export async function getAnalyticsDashboard(days: number): Promise<AnalyticsDash
     ]),
     SearchQuery.aggregate<{ _id: string; count: number }>([
       { $match: { suggest: false, createdAt: { $gte: since } } },
-      { $group: { _id: "$q", count: { $sum: 1 } } },
+      {
+        $project: {
+          key: {
+            $cond: [
+              { $gt: [{ $strLenCP: { $ifNull: ["$normalizedQ", ""] } }, 0] },
+              "$normalizedQ",
+              { $toLower: { $trim: { input: { $ifNull: ["$q", ""] } } } },
+            ],
+          },
+        },
+      },
+      { $match: { key: { $nin: ["", null] } } },
+      { $group: { _id: "$key", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 20 },
     ]),
@@ -167,7 +206,8 @@ export async function getAnalyticsDashboard(days: number): Promise<AnalyticsDash
   const uniqueVisitors = uniqueVisitorKeys.length;
   const avgSessionDurationSec = Math.round(sessionDuration[0]?.avgSec ?? 0);
   const bounceRatePct = sessions ? Math.round((bounces / sessions) * 1000) / 10 : 0;
-  const ctr = pageViews ? Math.round((clicks / pageViews) * 10000) / 100 : 0;
+  const ctr = sessions ? Math.round((sessionsWithClick / sessions) * 10000) / 100 : 0;
+  const ctrEventLevel = pageViews ? Math.round((clicks / pageViews) * 10000) / 100 : 0;
 
   const seriesMap = new Map<string, { pageViews: number; clicks: number; sessions: number }>();
   for (let i = 0; i < safeDays; i++) {
@@ -213,6 +253,7 @@ export async function getAnalyticsDashboard(days: number): Promise<AnalyticsDash
     pageViews,
     clicks,
     ctr,
+    ctrEventLevel,
     avgSessionDurationSec,
     bounceRatePct,
     searchCount,
@@ -240,6 +281,7 @@ export async function analyticsSummary(days: number) {
     pageViews: d.pageViews,
     clicks: d.clicks,
     ctr: d.ctr,
+    ctrEventLevel: d.ctrEventLevel,
     topPages: d.topPages.map((p) => ({ _id: p.path, count: p.count })),
     topCategories: d.topCategories.map((c) => ({ _id: c.slug, count: c.count })),
     uniqueVisitors: d.uniqueVisitors,

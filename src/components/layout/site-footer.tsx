@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { categoryTree } from "@/config/site";
+import type { CategoryTreeTop } from "@/services/category-service";
+import { SiteLogo } from "@/components/layout/site-logo";
 
 const PINTEREST_URL = "https://pinterest.com";
 const INSTAGRAM_URL = "https://instagram.com";
@@ -23,7 +24,21 @@ function InstagramIcon() {
   );
 }
 
-export function SiteFooter({ siteName, siteDescription }: { siteName: string; siteDescription: string }) {
+export function SiteFooter({
+  siteName,
+  siteDescription,
+  categoryTree,
+  footerMiniNewsletterLine,
+  footerSubscribeButtonLabel,
+  footerEmailPlaceholder,
+}: {
+  siteName: string;
+  siteDescription: string;
+  categoryTree: CategoryTreeTop[];
+  footerMiniNewsletterLine: string;
+  footerSubscribeButtonLabel: string;
+  footerEmailPlaceholder: string;
+}) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
@@ -53,9 +68,7 @@ export function SiteFooter({ siteName, siteDescription }: { siteName: string; si
       {/* Mini newsletter row */}
       <div className="border-b border-black/[0.06] bg-gradient-to-r from-amber-50 to-rose-50 dark:border-white/[0.06] dark:from-amber-950/30 dark:to-rose-950/30">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6 md:px-8">
-          <p className="text-sm font-medium text-foreground">
-            Get weekly interior inspiration in your inbox — join 12,000+ readers
-          </p>
+          <p className="text-sm font-medium text-foreground">{footerMiniNewsletterLine}</p>
           {status === "success" ? (
             <p className="text-sm font-medium text-green-600">You&rsquo;re subscribed!</p>
           ) : (
@@ -65,7 +78,7 @@ export function SiteFooter({ siteName, siteDescription }: { siteName: string; si
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email address"
+                placeholder={footerEmailPlaceholder}
                 className="h-10 flex-1 rounded-full border border-border bg-background px-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
               <button
@@ -73,7 +86,7 @@ export function SiteFooter({ siteName, siteDescription }: { siteName: string; si
                 disabled={status === "loading"}
                 className="h-10 rounded-full bg-neutral-900 px-5 text-sm font-semibold text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-white dark:text-neutral-900 dark:hover:bg-white/90"
               >
-                {status === "loading" ? "…" : "Subscribe"}
+                {status === "loading" ? "…" : footerSubscribeButtonLabel}
               </button>
             </form>
           )}
@@ -84,11 +97,8 @@ export function SiteFooter({ siteName, siteDescription }: { siteName: string; si
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 md:px-8 lg:grid-cols-4 lg:gap-12">
         {/* Brand */}
         <div className="lg:col-span-1">
-          <Link
-            href="/"
-            className="font-heading text-xl font-bold tracking-tight text-foreground"
-          >
-            {siteName}
+          <Link href="/" className="inline-block transition opacity-100 hover:opacity-90">
+            <SiteLogo siteName={siteName} className="w-[min(100%,200px)]" />
           </Link>
           <p className="mt-3 max-w-[22rem] text-sm leading-relaxed text-muted-foreground">
             {siteDescription}
@@ -166,7 +176,6 @@ export function SiteFooter({ siteName, siteDescription }: { siteName: string; si
               { href: "/about", label: "About us" },
               { href: "/contact", label: "Contact" },
               { href: "/newsletter", label: "Newsletter" },
-              { href: "/author/ahmar", label: "Authors" },
               { href: "/inspiration/seasonal/spring-refresh", label: "Seasonal guides" },
             ].map(({ href, label }) => (
               <li key={href}>

@@ -1,18 +1,25 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArticleCard } from "@/components/article/article-card";
-import { categoryTree } from "@/config/site";
 import { listTrendingArticles, searchArticles } from "@/services/article-service";
+import { SearchAnalyticsBeacon } from "@/components/analytics/search-analytics-beacon";
 import { SearchExperience } from "@/components/search/search-experience";
 import { buildMetadata } from "@/lib/utils/seo";
 import { getResolvedSiteBranding } from "@/services/site-settings-service";
 import { getHomeEditorialResolved } from "@/services/site-editorial-service";
-import { logSearchExecution } from "@/services/search-query-service";
+import { getSearchIdeaChips } from "@/services/search-query-service";
+import { getCategoryTree } from "@/services/category-service";
 
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: Promise<{ q?: string; page?: string; category?: string; tag?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+    category?: string;
+    subcategory?: string;
+    tag?: string;
+  }>;
 };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -39,29 +46,36 @@ export default async function SearchPage({ searchParams }: Props) {
   const page = Math.max(1, Number(params.page || "1"));
   const skip = (page - 1) * 24;
   const categorySlug = params.category || undefined;
+  const subcategorySlug = params.subcategory || undefined;
   const tagSlug = params.tag || undefined;
 
-  const [data, trending, editorial] = await Promise.all([
-    q
-      ? searchArticles({ q, limit: 24, skip, categorySlug, tagSlug })
+  const hasActiveSearch =
+    q.length >= 2 || Boolean(categorySlug || subcategorySlug || tagSlug);
+
+  const [data, trending, editorial, ideaChips, categoryTree] = await Promise.all([
+    hasActiveSearch
+      ? searchArticles({ q, limit: 24, skip, categorySlug, subcategorySlug, tagSlug })
       : Promise.resolve({ results: [] as Record<string, unknown>[], totalApprox: 0, source: "db" as const }),
     listTrendingArticles(8),
     getHomeEditorialResolved(),
+    getSearchIdeaChips(8),
+    getCategoryTree(),
   ]);
 
   const results = "results" in data ? data.results : [];
-
-  if (q.length >= 2) {
-    await logSearchExecution({
-      q,
-      resultCount: results.length,
-      categorySlug,
-      tagSlug,
-    });
-  }
+  const totalApprox = "totalApprox" in data ? Number(data.totalApprox) || 0 : 0;
 
   return (
     <div className="mx-auto min-w-0 max-w-7xl px-4 py-8 sm:px-5 md:px-8 md:py-14">
+      <SearchAnalyticsBeacon
+        q={q}
+        page={page}
+        resultCount={totalApprox}
+        resultsOnPage={results.length}
+        categorySlug={categorySlug}
+        subcategorySlug={subcategorySlug}
+        tagSlug={tagSlug}
+      />
       <div className="max-w-3xl">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           {editorial.searchIntroEyebrow}
@@ -70,16 +84,23 @@ export default async function SearchPage({ searchParams }: Props) {
         <p className="mt-3 text-muted-foreground">{editorial.searchIntroDek}</p>
       </div>
 
-      <SearchExperience initialQ={q} initialCategory={categorySlug} initialTag={tagSlug} />
+      <SearchExperience
+        initialQ={q}
+        initialCategory={categorySlug}
+        initialSubcategory={subcategorySlug}
+        initialTag={tagSlug}
+        ideaChips={ideaChips}
+        categoryTree={categoryTree}
+      />
 
-      {q ? (
+      {hasActiveSearch ? (
         <>
           <p className="mt-10 text-sm text-muted-foreground">
             About{" "}
             <span className="font-medium text-foreground">
               {results.length ? `${results.length}+` : "no"} matching stor{results.length === 1 ? "y" : "ies"}
             </span>{" "}
-            {categorySlug || tagSlug ? "(filtered)" : ""}
+            {categorySlug || subcategorySlug || tagSlug ? "(filtered)" : ""}
           </p>
           <div className="mt-6 grid min-w-0 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((a) => (
@@ -114,14 +135,14 @@ export default async function SearchPage({ searchParams }: Props) {
             <div className="mt-10 flex justify-center gap-4">
               {page > 1 ? (
                 <Link
-                  href={`/search?q=${encodeURIComponent(q)}&page=${page - 1}${categorySlug ? `&category=${categorySlug}` : ""}${tagSlug ? `&tag=${tagSlug}` : ""}`}
+                  href={searchResultsHref({ q, page: page - 1, categorySlug, subcategorySlug, tagSlug })}
                   className="rounded-full border px-6 py-3 text-sm font-medium"
                 >
                   Previous
                 </Link>
               ) : null}
               <Link
-                href={`/search?q=${encodeURIComponent(q)}&page=${page + 1}${categorySlug ? `&category=${categorySlug}` : ""}${tagSlug ? `&tag=${tagSlug}` : ""}`}
+                href={searchResultsHref({ q, page: page + 1, categorySlug, subcategorySlug, tagSlug })}
                 className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground"
               >
                 Next
@@ -182,4 +203,21 @@ function Highlight({ text, needle }: { text: string; needle: string }) {
 
 function escapeReg(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function searchResultsHref(opts: {
+  q: string;
+  page: number;
+  categorySlug?: string;
+  subcategorySlug?: string;
+  tagSlug?: string;
+}) {
+  const sp = new URLSearchParams();
+  if (opts.q.trim()) sp.set("q", opts.q.trim());
+  if (opts.categorySlug) sp.set("category", opts.categorySlug);
+  if (opts.subcategorySlug) sp.set("subcategory", opts.subcategorySlug);
+  if (opts.tagSlug) sp.set("tag", opts.tagSlug);
+  if (opts.page > 1) sp.set("page", String(opts.page));
+  const qs = sp.toString();
+  return qs ? `/search?${qs}` : "/search";
 }

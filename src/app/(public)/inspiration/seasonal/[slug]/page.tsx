@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArticleCard } from "@/components/article/article-card";
 import { seasonalHeroImage } from "@/config/images";
+import { applySeasonalIntroTemplate } from "@/config/seasonal-hub-defaults";
 import { listArticlesByTagPath } from "@/services/article-service";
 import { buildMetadata } from "@/lib/utils/seo";
 import { getResolvedSiteBranding, getSeasonalInspirationResolved } from "@/services/site-settings-service";
@@ -39,6 +40,12 @@ export default async function SeasonalPage({ params }: { params: Promise<{ slug:
   const grid = articles.length ? articles : fallback;
   const heroKey = match.imageKey;
 
+  const intro = applySeasonalIntroTemplate((match.pageIntro ?? "").trim(), match.name);
+  const storiesTitle = match.storiesSectionTitle;
+  const newsletterCta = match.newsletterCtaLabel;
+  const hubIntro = match.hubLinksIntro;
+  const extraHubLinks = match.extraHubLinks ?? [];
+
   return (
     <div>
       <div className="relative mx-auto max-w-7xl px-4 pb-4 pt-6 md:px-8">
@@ -57,16 +64,12 @@ export default async function SeasonalPage({ params }: { params: Promise<{ slug:
           <div>
             <h1 className="font-heading text-4xl font-semibold md:text-5xl">{match.name}</h1>
             <p className="mt-4 text-lg text-muted-foreground">{match.description}</p>
-            <p className="mt-6 leading-relaxed text-foreground/90">
-              Seasonal styling is less about themed props and more about light, layer weight, and scent memory. We pull room guides that
-              naturally align with {match.name.toLowerCase()} palettes — warm woods, breathable linens, grounded ceramics — so you can
-              refresh without replacing every piece.
-            </p>
+            <p className="mt-6 leading-relaxed text-foreground/90">{intro}</p>
             <Link
               href="/newsletter"
               className="mt-8 inline-flex rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"
             >
-              Get the seasonal letter
+              {newsletterCta}
             </Link>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-black/5 shadow-xl">
@@ -82,14 +85,14 @@ export default async function SeasonalPage({ params }: { params: Promise<{ slug:
         </div>
       </div>
       <section className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-        <h2 className="font-heading text-2xl font-semibold">Stories that fit this season</h2>
+        <h2 className="font-heading text-2xl font-semibold">{storiesTitle}</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {grid.slice(0, 12).map((a: { slug?: string }) => (
             <ArticleCard key={String(a.slug)} article={a as never} />
           ))}
         </div>
         <div className="mt-12 rounded-2xl border border-dashed border-border bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-          <span className="text-foreground/80">Explore year-round hubs: </span>
+          <span className="text-foreground/80">{hubIntro} </span>
           {seasonal
             .filter((s) => s.slug !== slug)
             .map((s, i) => (
@@ -100,14 +103,14 @@ export default async function SeasonalPage({ params }: { params: Promise<{ slug:
                 </Link>
               </span>
             ))}
-          <span className="text-muted-foreground/60"> · </span>
-          <Link href="/category/bedroom" className="font-medium text-primary hover:underline">
-            Bedroom
-          </Link>
-          <span className="text-muted-foreground/60"> · </span>
-          <Link href="/category/kitchen-and-table" className="font-medium text-primary hover:underline">
-            Kitchen &amp; table
-          </Link>
+          {extraHubLinks.map((link, i) => (
+            <span key={`${link.href}-${i}`}>
+              <span className="text-muted-foreground/60"> · </span>
+              <Link href={link.href} className="font-medium text-primary hover:underline">
+                {link.label}
+              </Link>
+            </span>
+          ))}
         </div>
       </section>
     </div>

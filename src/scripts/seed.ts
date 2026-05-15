@@ -1,14 +1,21 @@
+/**
+ * Pushes seed data (categories, articles, ads, …) into MongoDB.
+ * The app does not read these files at runtime — run this after deploy or to reset demo content.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import mongoose from "mongoose";
-import { categoryTree } from "@/config/site";
+import { DEFAULT_CATEGORY_TREE } from "@/data/seed-categories";
 import { DEFAULT_OG_IMAGE, DEFAULT_SEASONAL_ITEMS, DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_NAME } from "@/config/site-defaults";
 import { categoryHubEditorialSeed } from "@/data/seed-category-hub-editorial";
 import { buildSeedArticlesForDatabase } from "@/data/seed-articles/library";
 import { env } from "@/lib/env";
 import { seedSiteSettingsIfEmpty } from "@/services/site-settings-service";
+import { seedSitePageMarketingIfEmpty } from "@/services/site-page-marketing-service";
 import { Ad } from "@/models/Ad";
 import { Article } from "@/models/Article";
+import { filterTopLevelBySlug } from "@/lib/mongodb/category-scope";
+import { ensureCategoryIndexes } from "@/lib/mongodb/ensure-category-indexes";
 import { Category } from "@/models/Category";
 import { categoryHeroImage } from "@/config/images";
 
@@ -16,6 +23,7 @@ const sponsorCode = `<div style="padding:18px;text-align:center;border-radius:16
 
 async function run() {
   await mongoose.connect(env.MONGODB_URI, { dbName: "home_decor" });
+  await ensureCategoryIndexes();
 
   await seedSiteSettingsIfEmpty({
     name: DEFAULT_SITE_NAME,
@@ -26,30 +34,41 @@ async function run() {
     seasonalItems: [...DEFAULT_SEASONAL_ITEMS],
   });
 
-  for (const category of categoryTree) {
+  await seedSitePageMarketingIfEmpty();
+
+  for (let i = 0; i < DEFAULT_CATEGORY_TREE.length; i++) {
+    const category = DEFAULT_CATEGORY_TREE[i];
     const hub = categoryHubEditorialSeed[category.slug];
-    const existing = await Category.findOne({ slug: category.slug }).select("hubEditorial image").lean();
+    const existing = await Category.findOne(filterTopLevelBySlug(category.slug)).select("hubEditorial image").lean();
     const hasHub = Boolean(
       existing &&
         (existing as { hubEditorial?: { title?: string } }).hubEditorial?.title?.trim(),
     );
     const hasImage = Boolean((existing as { image?: string } | null)?.image?.trim());
     await Category.findOneAndUpdate(
-      { slug: category.slug },
+      filterTopLevelBySlug(category.slug),
       {
         name: category.name,
         slug: category.slug,
         parentSlug: null,
+        sortOrder: i,
         isActive: true,
         ...(!hasHub && hub ? { hubEditorial: hub } : {}),
         ...(!hasImage ? { image: categoryHeroImage(category.slug) } : {}),
       },
       { upsert: true },
     );
-    for (const sub of category.subcategories) {
+    for (let j = 0; j < category.subcategories.length; j++) {
+      const sub = category.subcategories[j];
       await Category.findOneAndUpdate(
-        { slug: sub },
-        { name: sub.replaceAll("-", " "), slug: sub, parentSlug: category.slug, isActive: true },
+        { parentSlug: category.slug, slug: sub },
+        {
+          name: String(sub).replaceAll("-", " "),
+          slug: sub,
+          parentSlug: category.slug,
+          sortOrder: j,
+          isActive: true,
+        },
         { upsert: true },
       );
     }

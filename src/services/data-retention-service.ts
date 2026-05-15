@@ -5,6 +5,7 @@ import { AdminAuditLog } from "@/models/AdminAuditLog";
 import { Analytics } from "@/models/Analytics";
 import { AnalyticsEvent } from "@/models/AnalyticsEvent";
 import { AnalyticsSession } from "@/models/AnalyticsSession";
+import { AnalyticsVisitorProfile } from "@/models/AnalyticsVisitorProfile";
 import { AnalyticsSnapshot } from "@/models/AnalyticsSnapshot";
 import { RetentionCleanupRun } from "@/models/RetentionCleanupRun";
 import { SearchQuery } from "@/models/SearchQuery";
@@ -77,6 +78,12 @@ export async function runDataRetentionCleanup(options?: {
     deleted.analyticsSessions = await deleteOlderThanBatched(
       AnalyticsSession,
       "lastActivityAt",
+      analyticsCutoff,
+      batch,
+    );
+    deleted.analyticsVisitorProfiles = await deleteOlderThanBatched(
+      AnalyticsVisitorProfile,
+      "lastSeenAt",
       analyticsCutoff,
       batch,
     );

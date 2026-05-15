@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { authCookie, verifyAdminToken } from "@/lib/utils/auth";
-import { categoryTree } from "@/config/site";
+import { connectDb } from "@/lib/db";
+import { filterTopLevelBySlug } from "@/lib/mongodb/category-scope";
+import { Category } from "@/models/Category";
 import { setTopLevelCategoryCardImage } from "@/services/category-service";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +18,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ slug: string 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { slug } = await ctx.params;
-  if (!categoryTree.some((c) => c.slug === slug)) {
+  await connectDb();
+  const exists = await Category.findOne({ ...filterTopLevelBySlug(slug), isActive: true }).select("_id").lean();
+  if (!exists) {
     return NextResponse.json({ error: "Unknown top-level category" }, { status: 400 });
   }
   let body: unknown;

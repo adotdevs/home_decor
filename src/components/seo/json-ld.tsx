@@ -18,7 +18,7 @@ export function articleSchema(
     "@type": "Article",
     headline: article.title,
     description: article.excerpt,
-    author: { "@type": "Person", name: article.authorName || "Editorial Team" },
+    author: { "@type": "Organization", name: "Editorial Team" },
     datePublished: article.publishedAt || article.createdAt,
     dateModified: article.updatedAt,
     image,

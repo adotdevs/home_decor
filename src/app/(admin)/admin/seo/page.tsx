@@ -25,7 +25,7 @@ type SeoForm = {
 };
 
 const DEFAULTS: SeoForm = {
-  siteTitle: "CoreFusion — Interior Inspiration & Design Guides",
+  siteTitle: "Core Fusion Infinity — Interior Inspiration & Design Guides",
   siteDescription:
     "Editorial home decor inspiration, seasonal room guides, and curated interior ideas for beautifully lived-in homes.",
   ogImage: "/images/assets/general/design-interior-light-room-minimal-items.jpg",

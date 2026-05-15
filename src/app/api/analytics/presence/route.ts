@@ -23,7 +23,7 @@ function prunePresenceMap() {
 }
 
 /**
- * Extends AnalyticsSession.lastActivityAt while the tab is visible — no AnalyticsEvent rows.
+ * Updates AnalyticsSession.lastSeenLiveAt for "live visitor" counts — does NOT extend session duration.
  * Rate-limited per sessionKey to limit write load.
  */
 export async function POST(req: Request) {
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   await connectDb();
   await AnalyticsSession.updateOne(
     { sessionKey, visitorKey },
-    { $set: { lastActivityAt: new Date() } },
+    { $set: { lastSeenLiveAt: new Date() } },
   );
 
   return NextResponse.json({ ok: true });

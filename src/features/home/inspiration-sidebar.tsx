@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdSlot } from "@/components/ads/ad-slot";
 import type { DefaultSeasonalItem } from "@/config/site-defaults";
 import { MotionSurface } from "@/features/home/motion-surface";
+import { hasAdsConsent } from "@/lib/consent/server";
 import { getAdByPlacement } from "@/services/ad-service";
 
 export async function InspirationSidebar({
@@ -17,11 +18,13 @@ export async function InspirationSidebar({
   newsletterTitle?: string;
   newsletterDek?: string;
 }) {
-  const sidebarAd = await getAdByPlacement("sidebar");
+  const adsOk = await hasAdsConsent();
+  const sidebarAd = adsOk ? await getAdByPlacement("sidebar") : null;
   const hasSidebarAd = Boolean(
     sidebarAd && String((sidebarAd as { code?: string }).code ?? "").trim().length > 0,
   );
-  const swipeHint = hasSidebarAd
+  const showPartnerSlide = hasSidebarAd && adsOk;
+  const swipeHint = showPartnerSlide
     ? "Swipe — newsletter · partners · seasons"
     : "Swipe — newsletter · seasons";
 
@@ -49,7 +52,7 @@ export async function InspirationSidebar({
           </Link>
         </MotionSurface>
 
-        {hasSidebarAd ? (
+        {showPartnerSlide ? (
           <MotionSurface
             className="w-[min(21rem,90%)] max-w-full shrink-0 snap-start snap-always sm:w-[min(22rem,90%)] lg:w-full lg:min-w-0 lg:shrink lg:snap-none lg:snap-normal"
             delay={0.06}
@@ -63,7 +66,7 @@ export async function InspirationSidebar({
 
         <MotionSurface
           className="w-[min(21rem,90%)] max-w-full shrink-0 snap-start snap-always rounded-3xl border border-black/5 bg-muted/40 p-5 backdrop-blur-sm sm:w-[min(22rem,90%)] lg:w-full lg:min-w-0 lg:shrink lg:snap-none lg:snap-normal"
-          delay={hasSidebarAd ? 0.12 : 0.06}
+          delay={showPartnerSlide ? 0.12 : 0.06}
           hoverShadow="0 18px 36px -20px rgba(0,0,0,0.2)"
         >
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{seasonalLabel}</p>

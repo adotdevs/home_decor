@@ -8,10 +8,12 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { AnalyticsRoot } from "@/components/analytics/analytics-root";
 import { JsonLd } from "@/components/seo/json-ld";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { ConsentShell } from "@/components/consent/consent-shell";
 import { buildMetadata } from "@/lib/utils/seo";
 import { getResolvedSiteBranding } from "@/services/site-settings-service";
 import { getCategoryTree } from "@/services/category-service";
 import { getGlobalMarketingMerged } from "@/services/site-page-marketing-service";
+import { getServerConsent } from "@/lib/consent/server";
 
 const heading = Cormorant_Garamond({
   subsets: ["latin"],
@@ -38,10 +40,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [b, categoryTree, g] = await Promise.all([
+  const [b, categoryTree, g, consentInitial] = await Promise.all([
     getResolvedSiteBranding(),
     getCategoryTree(),
     getGlobalMarketingMerged(),
+    getServerConsent(),
   ]);
   const baseUrl = b.url.replace(/\/$/, "");
   const orgSchema = {
@@ -79,9 +82,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <AdSlot placement="header" />
           </div>
         </Suspense>
-        <AnalyticsRoot>
-          <div className="min-h-[70vh] min-w-0 overflow-x-clip pb-24 md:pb-8">{children}</div>
-        </AnalyticsRoot>
+        <ConsentShell initial={consentInitial}>
+          <AnalyticsRoot>
+            <div className="min-h-[70vh] min-w-0 overflow-x-clip pb-24 md:pb-8">{children}</div>
+          </AnalyticsRoot>
+        </ConsentShell>
         <SiteFooter
           siteName={b.name}
           siteDescription={b.description}
@@ -90,13 +95,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           footerSubscribeButtonLabel={g.footerSubscribeButtonLabel}
           footerEmailPlaceholder={g.footerEmailPlaceholder}
         />
-        <Suspense fallback={null}>
-          <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/5 bg-background/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md md:hidden">
-            <div className="mx-auto max-w-7xl min-w-0 overflow-x-hidden">
-              <AdSlot placement="sticky-mobile" className="min-w-0" />
+        {consentInitial?.ads === true ? (
+          <Suspense fallback={null}>
+            <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/5 bg-background/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] backdrop-blur-md md:hidden">
+              <div className="mx-auto max-w-7xl min-w-0 overflow-x-hidden">
+                <AdSlot placement="sticky-mobile" className="min-w-0" />
+              </div>
             </div>
-          </div>
-        </Suspense>
+          </Suspense>
+        ) : null}
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useConsent } from "@/components/consent/consent-context";
 import { shouldSkipClientAnalytics } from "@/lib/analytics/client-filter";
 import {
   ANALYTICS_DOC_REF_KEY,
@@ -207,6 +208,7 @@ function flushQueue(visitorKey: string, sessionKey: string, referrer: string, qu
  * Side-effect only — does not wrap the tree so Suspense never blocks page render.
  */
 export function AnalyticsProvider() {
+  const { analytics: consentAnalytics } = useConsent();
   const pathname = usePathname() || "/";
   const sp = useSearchParams();
   const queryKey = sp?.toString() ?? "";
@@ -221,7 +223,7 @@ export function AnalyticsProvider() {
   const listenersBoundRef = useRef(false);
 
   const isAdmin = pathname.startsWith("/admin");
-  const skip = isAdmin || shouldSkipClientAnalytics();
+  const skip = isAdmin || shouldSkipClientAnalytics() || !consentAnalytics;
 
   const fullPath = useMemo(() => (queryKey ? `${pathname}?${queryKey}` : pathname), [pathname, queryKey]);
 

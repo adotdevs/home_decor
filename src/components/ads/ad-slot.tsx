@@ -1,4 +1,5 @@
 import { getAdByPlacement } from "@/services/ad-service";
+import { hasAdsConsent } from "@/lib/consent/server";
 import { cn } from "@/lib/utils";
 
 type AdRow = NonNullable<Awaited<ReturnType<typeof getAdByPlacement>>>;
@@ -48,6 +49,8 @@ export async function AdSlot({
   className?: string;
   ad?: AdRow | null;
 }) {
+  if (!(await hasAdsConsent())) return null;
+
   const layout = placementLayout[placement] ?? placementLayout.default;
   const ad = adProp !== undefined ? adProp : await getAdByPlacement(placement);
 

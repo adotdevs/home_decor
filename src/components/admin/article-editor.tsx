@@ -390,16 +390,16 @@ export function ArticleEditor({
   );
 
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+    <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <h1 className="font-heading text-3xl">{mode === "create" ? "Create article" : "Edit article"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Build the story with blocks — paragraphs, headings, bullet lists, quotes, and images (upload or URL) in any order. Inline
             images save at full file resolution on the public site.
           </p>
         </div>
-        <Link href="/admin/articles" className="cursor-pointer text-sm text-muted-foreground hover:text-foreground hover:underline">
+        <Link href="/admin/articles" className="cursor-pointer shrink-0 text-sm text-muted-foreground hover:text-foreground hover:underline">
           ← Back to list
         </Link>
       </div>

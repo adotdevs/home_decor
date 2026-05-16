@@ -13,7 +13,7 @@ const LINKS: { href: string; label: string; hint: string }[] = [
 
 export default function AdminPagesHub() {
   return (
-    <div className="space-y-8 p-4 md:p-8">
+    <div className="min-w-0 space-y-8 px-3 py-6 sm:px-4 md:p-8">
       <div>
         <h1 className="font-heading text-3xl font-semibold">Public page marketing</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">

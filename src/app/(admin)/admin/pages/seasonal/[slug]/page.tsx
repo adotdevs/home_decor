@@ -21,7 +21,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   return (
     <div>
-      <nav className="border-b bg-muted/30 px-4 py-3 text-sm text-muted-foreground md:px-8">
+      <nav className="border-b bg-muted/30 px-3 py-3 text-sm text-muted-foreground sm:px-4 md:px-8">
         <Link href="/admin/pages/seasonal" className="hover:underline">
           ← All seasonal hubs
         </Link>

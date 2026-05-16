@@ -60,7 +60,7 @@ export function SiteSettingsEditor({ initial }: { initial: SiteSettingsPayload }
   }, [name, description, publicUrl, ogImage, ogImageAlt, seasonalItems]);
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       <div>
         <h1 className="font-heading text-3xl font-semibold">Site & seasons</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">

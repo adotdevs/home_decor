@@ -91,9 +91,9 @@ export function ReviewsAdminClient() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+    <div className="min-w-0 space-y-6">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold">Reviews</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Moderate reader reviews, verify standout posts, and pin featured picks to the top of article pages.
@@ -106,7 +106,7 @@ export function ReviewsAdminClient() {
       </div>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 md:flex-row md:flex-wrap md:items-center">
-        <div className="relative min-w-[200px] flex-1">
+        <div className="relative min-w-0 flex-1 md:min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             className="h-10 w-full rounded-xl border border-border bg-background py-2 pr-3 pl-9 text-sm"
@@ -119,7 +119,7 @@ export function ReviewsAdminClient() {
           />
         </div>
         <select
-          className="h-10 rounded-xl border border-border bg-background px-3 text-sm"
+          className="h-10 w-full shrink-0 rounded-xl border border-border bg-background px-3 text-sm md:w-auto"
           value={status}
           onChange={(e) => {
             setStatus(e.target.value as ArticleReviewStatus | "all");
@@ -132,7 +132,7 @@ export function ReviewsAdminClient() {
           <option value="spam">Spam</option>
         </select>
         <input
-          className="h-10 min-w-[160px] rounded-xl border border-border bg-background px-3 text-sm font-mono"
+          className="h-10 w-full min-w-0 rounded-xl border border-border bg-background px-3 text-sm font-mono md:w-auto md:min-w-[160px]"
           placeholder="Article slug filter"
           value={articleSlug}
           onChange={(e) => {
@@ -180,7 +180,7 @@ export function ReviewsAdminClient() {
                     {r.status}
                   </span>
                 </div>
-                <p className="font-mono text-xs text-muted-foreground">
+                <p className="break-all font-mono text-xs text-muted-foreground">
                   /article/{r.articleSlug} ·{" "}
                   <time dateTime={r.createdAt}>{formatDistanceToNow(new Date(r.createdAt), { addSuffix: true })}</time>
                 </p>

@@ -7,9 +7,9 @@ export default async function Page() {
   const rows = await aggregateTopSearchQueries();
 
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
+      <div className="flex min-w-0 flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <h1 className="font-heading text-3xl">Search analytics</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Queries logged when visitors load the public <code className="rounded bg-muted px-1 text-xs">/search</code> page
@@ -17,7 +17,7 @@ export default async function Page() {
             counted here.
           </p>
         </div>
-        <Link href="/admin/analytics" className="text-sm text-muted-foreground hover:underline">
+        <Link href="/admin/analytics" className="shrink-0 text-sm text-muted-foreground hover:underline">
           View site analytics →
         </Link>
       </div>
@@ -42,7 +42,7 @@ export default async function Page() {
             ) : (
               rows.map((r) => (
                 <tr key={r._id} className="border-t">
-                  <td className="px-4 py-3 font-medium">{r._id}</td>
+                  <td className="max-w-[min(100vw-4rem,28rem)] break-words px-4 py-3 font-medium">{r._id}</td>
                   <td className="px-4 py-3 tabular-nums">{r.count}</td>
                   <td className="px-4 py-3 text-muted-foreground">{new Date(r.last).toLocaleString()}</td>
                 </tr>

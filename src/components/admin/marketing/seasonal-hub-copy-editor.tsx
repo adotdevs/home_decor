@@ -66,7 +66,7 @@ export function SeasonalHubCopyEditor({
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-10 p-4 md:p-8">
+    <div className="mx-auto min-w-0 w-full max-w-3xl space-y-10 px-3 py-6 sm:px-4 md:p-8">
       <nav className="text-sm text-muted-foreground">
         <Link href="/admin/pages" className="hover:underline">
           Admin

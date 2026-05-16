@@ -99,9 +99,9 @@ export default function AdminSeoPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
+    <div className="min-w-0 space-y-6">
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <h1 className="font-heading text-3xl font-bold">SEO Management</h1>
           <p className="mt-1 text-muted-foreground">
             Configure global site metadata, Open Graph defaults, and Twitter card settings.
@@ -111,7 +111,7 @@ export default function AdminSeoPage() {
           type="button"
           onClick={load}
           disabled={loading}
-          className="flex h-9 items-center gap-2 rounded-full border border-border px-4 text-sm text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+          className="flex shrink-0 items-center gap-2 rounded-full border border-border px-4 py-1.5 text-sm text-muted-foreground transition hover:text-foreground disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -124,7 +124,7 @@ export default function AdminSeoPage() {
         </div>
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
-          <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
+          <div className="space-y-5 rounded-2xl border border-border bg-card p-4 sm:p-6">
             <h2 className="font-semibold">Global metadata</h2>
 
             <label className="block">
@@ -156,7 +156,7 @@ export default function AdminSeoPage() {
             </label>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-6 space-y-5">
+          <div className="space-y-5 rounded-2xl border border-border bg-card p-4 sm:p-6">
             <h2 className="font-semibold">Open Graph & social sharing</h2>
 
             <div>
@@ -264,7 +264,7 @@ export default function AdminSeoPage() {
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <button
               type="submit"
               disabled={saving}

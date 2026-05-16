@@ -245,7 +245,7 @@ export function CategoriesAdmin({ initial }: { initial: TopLevelCategoryAdminRow
   );
 
   return (
-    <div className="rounded-2xl border bg-card p-6">
+    <div className="min-w-0 rounded-2xl border bg-card p-4 sm:p-6">
       <h1 className="font-heading text-3xl">Categories</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
         Manage room names, images, and URLs. To change the headlines and paragraphs on public category pages, open “Edit page text”
@@ -255,7 +255,7 @@ export function CategoriesAdmin({ initial }: { initial: TopLevelCategoryAdminRow
       <div className="mt-8 rounded-xl border border-dashed border-border/80 bg-muted/20 p-4">
         <p className="text-sm font-medium text-foreground">Add top-level category</p>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="block flex-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <label className="block min-w-0 flex-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Display name
             <input
               className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground"

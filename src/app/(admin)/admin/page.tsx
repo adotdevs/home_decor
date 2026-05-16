@@ -100,7 +100,7 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       <div>
         <h1 className="font-heading text-3xl font-bold">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">Operational overview — last 30 days</p>
@@ -111,10 +111,10 @@ export default async function AdminDashboardPage() {
         {kpis.map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <div key={kpi.label} className="rounded-2xl border border-border bg-card p-5">
-              <div className="flex items-center justify-between">
+            <div key={kpi.label} className="min-w-0 rounded-2xl border border-border bg-card p-4 sm:p-5">
+              <div className="flex min-w-0 items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                <Icon className={`h-5 w-5 ${kpi.color}`} />
+                <Icon className={`h-5 w-5 shrink-0 ${kpi.color}`} />
               </div>
               <p className="mt-2 font-heading text-3xl font-bold">{kpi.value}</p>
               <p className="mt-1 text-xs text-muted-foreground">{kpi.sub}</p>
@@ -148,8 +148,8 @@ export default async function AdminDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent articles */}
         <div className="rounded-2xl border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="font-semibold">Recent articles</h2>
+          <div className="flex min-w-0 items-center justify-between gap-3 border-b border-border px-3 py-4 sm:px-5">
+            <h2 className="min-w-0 truncate font-semibold">Recent articles</h2>
             <Link
               href="/admin/articles"
               className="text-xs font-medium text-amber-600 hover:underline"
@@ -159,7 +159,7 @@ export default async function AdminDashboardPage() {
           </div>
           <ul className="divide-y divide-border">
             {(recentArticles as Record<string, unknown>[]).map((a) => (
-              <li key={String(a.slug)} className="flex items-start justify-between gap-3 px-5 py-3">
+              <li key={String(a.slug)} className="flex items-start justify-between gap-3 px-3 py-3 sm:px-5">
                 <div className="min-w-0">
                   <Link
                     href={`/admin/articles/${a.slug}/edit`}
@@ -189,7 +189,7 @@ export default async function AdminDashboardPage() {
               </li>
             ))}
             {recentArticles.length === 0 && (
-              <li className="px-5 py-6 text-center text-sm text-muted-foreground">
+              <li className="px-3 py-6 text-center text-sm text-muted-foreground sm:px-5">
                 No articles yet.{" "}
                 <Link href="/admin/articles/create" className="text-amber-600 hover:underline">
                   Create one
@@ -201,10 +201,10 @@ export default async function AdminDashboardPage() {
 
         {/* DB status */}
         <div className="rounded-2xl border border-border bg-card">
-          <div className="border-b border-border px-5 py-4">
+          <div className="border-b border-border px-3 py-4 sm:px-5">
             <h2 className="font-semibold">Content status</h2>
           </div>
-          <div className="space-y-4 p-5">
+          <div className="space-y-4 p-3 sm:p-5">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
@@ -244,13 +244,13 @@ export default async function AdminDashboardPage() {
       {/* Top pages */}
       {summary.topPages.length > 0 && (
         <div className="rounded-2xl border border-border bg-card">
-          <div className="border-b border-border px-5 py-4">
+          <div className="border-b border-border px-3 py-4 sm:px-5">
             <h2 className="font-semibold">Top pages (30 days)</h2>
           </div>
           <ul className="divide-y divide-border">
             {(summary.topPages as { _id: string; count: number }[]).slice(0, 8).map((p) => (
-              <li key={p._id} className="flex items-center justify-between px-5 py-2.5">
-                <span className="truncate text-sm text-muted-foreground">{p._id || "/"}</span>
+              <li key={p._id} className="flex items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
+                <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{p._id || "/"}</span>
                 <span className="shrink-0 pl-4 text-sm font-semibold">{p.count}</span>
               </li>
             ))}

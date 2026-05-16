@@ -54,11 +54,11 @@ export function DashboardCharts({ data }: { data: AnalyticsDashboard }) {
   const maxCountryCount = Math.max(1, ...countriesRanked.map((c) => c.count));
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-2xl border border-border/80 bg-gradient-to-b from-card to-card/80 p-5 shadow-sm">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-heading text-lg font-semibold">Traffic over time</h3>
-          <span className="text-xs text-muted-foreground">Daily</span>
+    <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+      <div className="min-w-0 rounded-2xl border border-border/80 bg-gradient-to-b from-card to-card/80 p-5 shadow-sm">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <h3 className="min-w-0 truncate font-heading text-lg font-semibold">Traffic over time</h3>
+          <span className="shrink-0 text-xs text-muted-foreground">Daily</span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Page views, clicks, and new sessions</p>
         <div className="mt-6 h-72 w-full min-w-0">
@@ -115,9 +115,9 @@ export function DashboardCharts({ data }: { data: AnalyticsDashboard }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/80 bg-gradient-to-b from-card to-card/80 p-5 shadow-sm">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
+      <div className="min-w-0 rounded-2xl border border-border/80 bg-gradient-to-b from-card to-card/80 p-5 shadow-sm">
+        <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0 flex-1">
             <h3 className="font-heading text-lg font-semibold">Top countries</h3>
             <p className="mt-1 text-xs text-muted-foreground">
               Unique visitors per country (session geo from edge headers or client lookup). One visitor can appear in
@@ -174,7 +174,7 @@ export function DashboardCharts({ data }: { data: AnalyticsDashboard }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/80 bg-gradient-to-b from-card to-card/80 p-5 shadow-sm lg:col-span-2">
+      <div className="min-w-0 rounded-2xl border border-border/80 bg-gradient-to-b from-card to-card/80 p-5 shadow-sm lg:col-span-2">
         <h3 className="font-heading text-lg font-semibold">Devices</h3>
         <div className="mt-6 h-56 w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">

@@ -51,7 +51,7 @@ export function LoginForm({ siteName }: { siteName: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16 md:py-24">
+    <div className="mx-auto max-w-md min-w-0 px-3 py-16 sm:px-4 md:py-24">
       <Link href="/" className="mb-8 inline-block transition hover:opacity-90">
         <SiteLogo siteName={siteName} className="w-[min(100%,200px)]" />
       </Link>

@@ -10,9 +10,9 @@ export default async function Page() {
   const rows = await Article.find().sort({ updatedAt: -1 }).limit(100).lean();
 
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-heading text-3xl">Articles</h1>
+    <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
+      <div className="mb-6 flex min-w-0 flex-wrap items-center justify-between gap-4">
+        <h1 className="min-w-0 font-heading text-3xl">Articles</h1>
         <Link
           href="/admin/articles/create"
           className="cursor-pointer rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-95"

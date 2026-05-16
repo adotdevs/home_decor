@@ -63,17 +63,17 @@ export function CategoryTopHubContentForm({ categorySlug, initialEditorial, init
   }, [categorySlug, editorial, pageCopy]);
 
   return (
-    <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+    <div className="mx-auto min-w-0 w-full max-w-3xl rounded-2xl border bg-card p-4 sm:p-6">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <h1 className="font-heading text-2xl">Category page text</h1>
-          <p className="mt-1 font-mono text-sm text-muted-foreground">/category/{categorySlug}</p>
+          <p className="mt-1 break-all font-mono text-sm text-muted-foreground">/category/{categorySlug}</p>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
             These lines appear on the public room hub. Leave a box empty only if you want to fall back to the site default for
             that spot (FAQ lists fall back when every pair is cleared).
           </p>
         </div>
-        <Link href="/admin/categories" className="text-sm font-medium text-primary hover:underline">
+        <Link href="/admin/categories" className="shrink-0 text-sm font-medium text-primary hover:underline">
           ← All categories
         </Link>
       </div>

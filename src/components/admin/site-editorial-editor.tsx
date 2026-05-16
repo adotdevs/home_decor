@@ -368,8 +368,8 @@ export function SiteEditorialEditor({
   }
 
   return (
-    <div className="space-y-8 pb-28">
-      <header className="rounded-2xl border border-amber-200/60 bg-amber-50/80 px-5 py-4 dark:border-amber-900/50 dark:bg-amber-950/20">
+    <div className="min-w-0 space-y-8 pb-28">
+      <header className="rounded-2xl border border-amber-200/60 bg-amber-50/80 px-3 py-4 dark:border-amber-900/50 dark:bg-amber-950/20 sm:px-5">
         <h1 className="font-heading text-2xl font-semibold md:text-3xl">Edit your homepage</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Change the big rotating photos, which story is featured first, and which articles appear in each section. Saving updates
@@ -434,8 +434,8 @@ export function SiteEditorialEditor({
             >
               <p className="text-sm font-medium text-foreground">Slide {i + 1}</p>
 
-              <div className="mt-4 grid gap-5 md:grid-cols-[220px_1fr] md:items-start">
-                <div className="space-y-2">
+              <div className="mt-4 grid min-w-0 gap-5 md:grid-cols-[220px_1fr] md:items-start">
+                <div className="min-w-0 space-y-2">
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted">
                     {s.src ? (
                       <Image src={s.src} alt={s.src ? resolveHeroSlideAlt(s) : "Slide preview"} fill className="object-cover" sizes="220px" />
@@ -456,7 +456,7 @@ export function SiteEditorialEditor({
                   <p className="text-[11px] text-muted-foreground">JPG, PNG, WebP, GIF · max 8 MB. Or drag a file onto this box.</p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                   <label className="block sm:col-span-2">
                     <span className="text-sm font-medium">Small label above the headline</span>
                     <input
@@ -561,8 +561,8 @@ export function SiteEditorialEditor({
               }}
             >
               <p className="text-sm font-medium text-foreground">Card {i + 1}</p>
-              <div className="mt-4 grid gap-5 md:grid-cols-[220px_1fr] md:items-start">
-                <div className="space-y-2">
+              <div className="mt-4 grid min-w-0 gap-5 md:grid-cols-[220px_1fr] md:items-start">
+                <div className="min-w-0 space-y-2">
                   <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted">
                     {row.image ? (
                       <Image
@@ -589,7 +589,7 @@ export function SiteEditorialEditor({
                   </button>
                   <p className="text-[11px] text-muted-foreground">JPG, PNG, WebP, GIF · max 8 MB. Or drag a file here.</p>
                 </div>
-                <div className="grid gap-3">
+                <div className="grid min-w-0 gap-3">
                   <label className="block">
                     <span className="text-sm font-medium">Title on the card</span>
                     <input
@@ -983,8 +983,8 @@ export function SiteEditorialEditor({
         </div>
       </details>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 px-4 py-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md md:static md:z-0 md:border-0 md:bg-transparent md:p-0 md:shadow-none">
-        <div className="mx-auto flex max-w-7xl flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 px-3 py-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md sm:px-4 md:static md:z-0 md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+        <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground md:max-w-md">
              Save to update the live homepage. Need images elsewhere too? Use <strong>Media</strong> in the menu.
           </p>

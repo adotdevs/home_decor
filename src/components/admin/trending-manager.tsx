@@ -109,7 +109,7 @@ export function TrendingManager() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       {error ? (
         <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
       ) : null}
@@ -148,7 +148,7 @@ export function TrendingManager() {
               placeholder="Filter by title or slug…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="min-w-[12rem] rounded-xl border bg-background px-3 py-2 text-sm"
+              className="w-full min-w-0 rounded-xl border bg-background px-3 py-2 text-sm sm:w-auto sm:min-w-[12rem]"
             />
             <button
               type="button"
@@ -168,7 +168,7 @@ export function TrendingManager() {
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border/60">
           <table className="w-full min-w-[720px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b text-xs uppercase tracking-wide text-muted-foreground">

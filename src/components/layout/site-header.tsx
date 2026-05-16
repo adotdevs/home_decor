@@ -43,11 +43,42 @@ export function SiteHeader({ siteName, categoryTree }: { siteName: string; categ
     requestAnimationFrame(() => menuButtonRef.current?.focus());
   }, []);
 
+  const roomsRef = useRef<HTMLDivElement>(null);
+  const [roomsOpen, setRoomsOpen] = useState(false);
+  const [hoverFinePointer, setHoverFinePointer] = useState(true);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const onChange = () => setHoverFinePointer(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   useEffect(() => {
     queueMicrotask(() => {
       setOpen(false);
+      setRoomsOpen(false);
     });
   }, [pathname]);
+
+  useEffect(() => {
+    if (hoverFinePointer || !roomsOpen) return;
+    function onDoc(ev: PointerEvent) {
+      if (!roomsRef.current?.contains(ev.target as Node)) setRoomsOpen(false);
+    }
+    document.addEventListener("pointerdown", onDoc, true);
+    return () => document.removeEventListener("pointerdown", onDoc, true);
+  }, [hoverFinePointer, roomsOpen]);
+
+  useEffect(() => {
+    if (hoverFinePointer || !roomsOpen) return;
+    function onKey(ev: KeyboardEvent) {
+      if (ev.key === "Escape") setRoomsOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hoverFinePointer, roomsOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -118,7 +149,7 @@ export function SiteHeader({ siteName, categoryTree }: { siteName: string; categ
               {label}
             </Link>
           ))}
-          <div className="group relative">
+          <div ref={roomsRef} className="group relative">
             <button
               type="button"
               className={cn(
@@ -127,23 +158,36 @@ export function SiteHeader({ siteName, categoryTree }: { siteName: string; categ
                   ? "font-medium text-foreground"
                   : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
               )}
-              aria-expanded={false}
+              id="rooms-nav-trigger"
+              aria-expanded={hoverFinePointer ? undefined : roomsOpen}
+              aria-controls={hoverFinePointer ? undefined : "rooms-mega-menu"}
               aria-haspopup="menu"
+              onClick={() => {
+                if (!hoverFinePointer) setRoomsOpen((o) => !o);
+              }}
             >
               Rooms
               <ChevronDown
-                className="h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 ease-out group-hover:rotate-180 md:h-[1.125rem] md:w-[1.125rem]"
+                className={cn(
+                  "h-4 w-4 shrink-0 opacity-70 transition-transform duration-200 ease-out md:h-[1.125rem] md:w-[1.125rem]",
+                  hoverFinePointer && "group-hover:rotate-180",
+                  !hoverFinePointer && roomsOpen && "rotate-180",
+                )}
                 strokeWidth={2}
                 aria-hidden
               />
             </button>
             {/* Padding = hover bridge between trigger and panel */}
             <div
+              id="rooms-mega-menu"
+              role="region"
+              aria-labelledby="rooms-nav-trigger"
               className={cn(
-                "invisible absolute left-1/2 top-full z-50 w-[min(52rem,calc(100vw-1.5rem))] -translate-x-1/2 pt-4 opacity-0 transition-[opacity,visibility] duration-200 ease-out",
+                "absolute left-1/2 top-full z-50 w-[min(52rem,calc(100vw-1.5rem))] -translate-x-1/2 pt-4 transition-[opacity,visibility] duration-200 ease-out",
                 "xl:w-[min(60rem,calc(100vw-2rem))]",
-                "group-hover:visible group-hover:opacity-100",
-                "group-focus-within:visible group-focus-within:opacity-100",
+                hoverFinePointer
+                  ? "invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                  : cn(roomsOpen ? "visible opacity-100" : "invisible pointer-events-none opacity-0"),
               )}
             >
               <div

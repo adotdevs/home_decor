@@ -19,7 +19,7 @@ export default async function Page() {
   >[];
 
   return (
-    <div className="rounded-2xl border bg-card p-6 shadow-sm">
+    <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm sm:p-6">
       <h1 className="font-heading text-3xl">Contact submissions</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
         Messages sent from the public contact form at /contact. Newest first.
@@ -44,7 +44,7 @@ export default async function Page() {
                     <p className="font-medium text-foreground">{String(r.name || "")}</p>
                     <p className="truncate text-sm text-muted-foreground">{String(r.email || "")}</p>
                   </div>
-                  <div className="text-right text-xs text-muted-foreground">
+                <div className="min-w-0 text-right text-xs text-muted-foreground sm:shrink-0">
                     <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground">
                       {subjectLabel}
                     </span>
@@ -53,7 +53,7 @@ export default async function Page() {
                     ) : null}
                   </div>
                 </div>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/90">
                   {String(r.message || "")}
                 </p>
               </article>

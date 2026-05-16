@@ -18,12 +18,12 @@ export default async function OwnerRetentionPage() {
   const totalTrackedBytes = rows.reduce((s, r) => s + r.storageBytes, 0);
 
   return (
-    <div className="space-y-10 pb-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="min-w-0 space-y-10 pb-12">
+      <div className="flex min-w-0 flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Platform owner</p>
           <h1 className="font-heading text-3xl font-bold tracking-tight">Data retention & storage</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          <p className="mt-2 max-w-2xl break-words text-sm text-muted-foreground">
             Automated cleanup uses batched deletes (non-blocking) on analytics, search logs, legacy visitor rows,
             audit records, and snapshots. Content collections (articles, categories, reviews, media, SEO) are never
             touched. Schedule{" "}
@@ -31,33 +31,35 @@ export default async function OwnerRetentionPage() {
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">Authorization: Bearer CRON_SECRET</code>.
           </p>
         </div>
-        <RetentionRunButton />
+        <div className="shrink-0">
+          <RetentionRunButton />
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">Analytics &amp; telemetry</p>
           <p className="mt-2 font-heading text-2xl font-bold tabular-nums">{env.ANALYTICS_RETENTION_DAYS} days</p>
           <p className="mt-1 text-xs text-muted-foreground">Events, sessions, search queries, legacy points, visitors</p>
         </div>
-        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">Audit &amp; snapshots</p>
           <p className="mt-2 font-heading text-2xl font-bold tabular-nums">{env.AUDIT_RETENTION_DAYS} days</p>
           <p className="mt-1 text-xs text-muted-foreground">Admin audit log</p>
         </div>
-        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">Analytics snapshots</p>
           <p className="mt-2 font-heading text-2xl font-bold tabular-nums">{env.ANALYTICS_SNAPSHOT_RETENTION_DAYS} days</p>
           <p className="mt-1 text-xs text-muted-foreground">Pre-reset bundles when enabled</p>
         </div>
-        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-5 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">Batch size</p>
           <p className="mt-2 font-heading text-2xl font-bold tabular-nums">{env.RETENTION_DELETE_BATCH_SIZE}</p>
           <p className="mt-1 text-xs text-muted-foreground">Documents per delete chunk</p>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+      <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-6">
         <h2 className="font-heading text-lg font-semibold">Collection sizes</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Approximate storage from MongoDB <code className="rounded bg-muted px-1">$collStats</code> · tracked total{" "}
@@ -78,7 +80,7 @@ export default async function OwnerRetentionPage() {
                 <tr key={r.key} className="border-b border-border/50 last:border-0">
                   <td className="px-4 py-3">
                     <span className="font-medium">{r.label}</span>
-                    <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">{r.collection}</span>
+                    <span className="mt-0.5 block break-all font-mono text-[11px] text-muted-foreground">{r.collection}</span>
                   </td>
                   <td className="px-4 py-3 tabular-nums">{r.count.toLocaleString()}</td>
                   <td className="px-4 py-3 tabular-nums">{formatBytes(r.storageBytes)}</td>
@@ -98,8 +100,8 @@ export default async function OwnerRetentionPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-6">
           <h2 className="font-heading text-lg font-semibold">Retention policy summary</h2>
           <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-muted-foreground">
             <li>
@@ -117,21 +119,21 @@ export default async function OwnerRetentionPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-6">
           <h2 className="font-heading text-lg font-semibold">Last cleanup</h2>
           {last ? (
             <dl className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Finished</dt>
-                <dd className="font-medium tabular-nums">{fmtTs(last.finishedAt)}</dd>
+              <div className="flex min-w-0 justify-between gap-4">
+                <dt className="min-w-0 shrink text-muted-foreground">Finished</dt>
+                <dd className="min-w-0 shrink-0 text-right font-medium tabular-nums">{fmtTs(last.finishedAt)}</dd>
               </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Trigger</dt>
-                <dd className="capitalize">{String(last.trigger)}</dd>
+              <div className="flex min-w-0 justify-between gap-4">
+                <dt className="min-w-0 shrink text-muted-foreground">Trigger</dt>
+                <dd className="min-w-0 text-right capitalize">{String(last.trigger)}</dd>
               </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Duration</dt>
-                <dd className="tabular-nums">{last.durationMs} ms</dd>
+              <div className="flex min-w-0 justify-between gap-4">
+                <dt className="min-w-0 shrink text-muted-foreground">Duration</dt>
+                <dd className="shrink-0 tabular-nums">{last.durationMs} ms</dd>
               </div>
               {last.error ? (
                 <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive">
@@ -145,7 +147,7 @@ export default async function OwnerRetentionPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+      <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-6">
         <h2 className="font-heading text-lg font-semibold">Cleanup activity log</h2>
         <p className="mt-1 text-xs text-muted-foreground">Recent automated and manual retention passes</p>
         <ul className="mt-4 divide-y divide-border/70">
@@ -157,8 +159,8 @@ export default async function OwnerRetentionPage() {
               const keys = Object.keys(del);
               const total = keys.reduce((s, k) => s + (typeof del[k] === "number" ? del[k] : 0), 0);
               return (
-                <li key={String(run._id)} className="flex flex-wrap items-start justify-between gap-3 py-4 text-sm">
-                  <div>
+                <li key={String(run._id)} className="flex min-w-0 flex-wrap items-start justify-between gap-3 py-4 text-sm">
+                  <div className="min-w-0">
                     <p className="font-medium">
                       {fmtTs(run.finishedAt)} · <span className="capitalize text-muted-foreground">{String(run.trigger)}</span>
                     </p>
@@ -166,7 +168,7 @@ export default async function OwnerRetentionPage() {
                       {total.toLocaleString()} docs removed · {run.durationMs} ms
                     </p>
                     {keys.length ? (
-                      <p className="mt-2 font-mono text-[11px] leading-relaxed text-muted-foreground">
+                      <p className="mt-2 break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
                         {keys.slice(0, 8).map((k) => `${k}:${del[k]}`).join(" · ")}
                         {keys.length > 8 ? " · …" : ""}
                       </p>
@@ -180,7 +182,7 @@ export default async function OwnerRetentionPage() {
         </ul>
       </div>
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="mx-auto max-w-prose text-center text-xs leading-relaxed break-words text-muted-foreground">
         Env: ANALYTICS_RETENTION_DAYS, AUDIT_RETENTION_DAYS, ANALYTICS_SNAPSHOT_RETENTION_DAYS, RETENTION_DELETE_BATCH_SIZE,
         PLATFORM_OWNER_EMAIL · MongoDB TTL can be added separately; this app uses scheduled batched deletes for flexible windows.
       </p>

@@ -20,17 +20,17 @@ function Kpi({
   iconClass: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-card/90 p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md">
+    <div className="group relative min-w-0 overflow-hidden rounded-2xl border border-border/80 bg-card/90 p-5 shadow-sm transition hover:border-primary/25 hover:shadow-md">
       <div
         className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/10 opacity-40 transition group-hover:opacity-60"
       />
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
           <p className="mt-2 font-heading text-3xl font-bold tracking-tight tabular-nums">{value}</p>
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>
         </div>
-        <div className={`rounded-xl border bg-background/90 p-2.5 ${iconClass}`}>
+        <div className={`shrink-0 rounded-xl border bg-background/90 p-2.5 ${iconClass}`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -56,9 +56,9 @@ export default async function AnalyticsPage() {
   const d = await getAnalyticsDashboard(30);
 
   return (
-    <div className="space-y-10 pb-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+    <div className="min-w-0 space-y-10 pb-12">
+      <div className="flex min-w-0 flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold tracking-tight md:text-4xl">Analytics</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
             First-party metrics: per-tab sessions with a 30-minute inactivity timeout (sessionStorage), heartbeats only for
@@ -66,7 +66,7 @@ export default async function AnalyticsPage() {
             debounced search logging from the browser, and marketing attribution from the landing URL.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
@@ -87,7 +87,7 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           label="Sessions (30d)"
           value={fmt(d.sessions)}
@@ -118,7 +118,7 @@ export default async function AnalyticsPage() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi
           label="CTR"
           value={`${d.ctr.toFixed(2)}%`}
@@ -151,8 +151,8 @@ export default async function AnalyticsPage() {
 
       <DashboardCharts data={d} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
           <h3 className="font-heading text-lg font-semibold">Top pages</h3>
           <ul className="mt-4 divide-y divide-border/80">
             {d.topPages.length === 0 ? (
@@ -168,7 +168,7 @@ export default async function AnalyticsPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
           <h3 className="font-heading text-lg font-semibold">Top articles</h3>
           <ul className="mt-4 divide-y divide-border/80">
             {d.topArticles.length === 0 ? (
@@ -186,19 +186,19 @@ export default async function AnalyticsPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
           <h3 className="font-heading text-lg font-semibold">Traffic sources</h3>
           <ul className="mt-4 divide-y divide-border/80">
             {d.topTrafficSources.map((row) => (
               <li key={row.source} className="flex items-center justify-between gap-3 py-3 text-sm capitalize">
-                <span className="text-muted-foreground">{row.source.replace(/_/g, " ")}</span>
-                <span className="tabular-nums font-semibold">{row.count}</span>
+                <span className="min-w-0 break-words text-muted-foreground">{row.source.replace(/_/g, " ")}</span>
+                <span className="shrink-0 tabular-nums font-semibold">{row.count}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
           <h3 className="font-heading text-lg font-semibold">Top categories (views)</h3>
           <ul className="mt-4 divide-y divide-border/80">
             {d.topCategories.length === 0 ? (
@@ -206,7 +206,7 @@ export default async function AnalyticsPage() {
             ) : (
               d.topCategories.map((row) => (
                 <li key={row.slug} className="flex items-center justify-between gap-3 py-3 text-sm">
-                  <span className="capitalize text-muted-foreground">{row.slug.replace(/-/g, " ")}</span>
+                  <span className="min-w-0 truncate capitalize text-muted-foreground">{row.slug.replace(/-/g, " ")}</span>
                   <span className="shrink-0 tabular-nums font-semibold">{row.count}</span>
                 </li>
               ))
@@ -214,7 +214,7 @@ export default async function AnalyticsPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
           <h3 className="font-heading text-lg font-semibold">Top referrers</h3>
           <ul className="mt-4 divide-y divide-border/80">
             {d.topReferrers.length === 0 ? (
@@ -230,7 +230,7 @@ export default async function AnalyticsPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm lg:col-span-2">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-6 shadow-sm lg:col-span-2">
           <h3 className="font-heading text-lg font-semibold">Best CTR pages</h3>
           <p className="mt-1 text-xs text-muted-foreground">Minimum 5 page views · clicks on that URL</p>
           <div className="mt-4 overflow-x-auto rounded-xl border border-border/60">
@@ -265,7 +265,7 @@ export default async function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm lg:col-span-2">
+        <div className="min-w-0 rounded-2xl border border-border/80 bg-card p-6 shadow-sm lg:col-span-2">
           <h3 className="font-heading text-lg font-semibold">Top in-site searches (logged)</h3>
           <p className="mt-1 text-xs text-muted-foreground">Matches the Search analytics report (Mongo SearchQuery).</p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -275,9 +275,9 @@ export default async function AnalyticsPage() {
               d.topSearches.slice(0, 16).map((s) => (
                 <span
                   key={s.query}
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/25 px-3 py-1 text-xs font-medium"
+                  className="inline-flex max-w-full min-w-0 items-center gap-2 break-words rounded-full border border-border bg-muted/25 px-3 py-1 text-xs font-medium"
                 >
-                  {s.query}
+                  <span className="min-w-0 break-all">{s.query}</span>
                   <span className="tabular-nums text-muted-foreground">{s.count}×</span>
                 </span>
               ))

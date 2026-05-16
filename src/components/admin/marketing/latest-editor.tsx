@@ -19,7 +19,7 @@ export function LatestMarketingEditor({ initial }: { initial: LatestMarketingPay
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 p-4 md:p-8">
+    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-8 px-3 py-6 sm:px-4 md:p-8">
       <div>
         <h1 className="font-heading text-2xl font-semibold">Public page: /latest</h1>
         <p className="mt-2 text-sm text-muted-foreground">Latest stories — hero, SEO, and three bullet columns.</p>

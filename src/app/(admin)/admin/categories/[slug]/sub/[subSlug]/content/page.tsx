@@ -11,8 +11,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string;
   if (!top || !sub) notFound();
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
-      <nav className="text-sm text-muted-foreground">
+    <div className="min-w-0 space-y-6 px-3 py-6 sm:px-4 md:p-8">
+      <nav className="flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground">
         <Link href="/admin" className="hover:underline">
           Admin
         </Link>
@@ -21,11 +21,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string;
           Categories
         </Link>
         <span className="mx-2">/</span>
-        <Link href={`/admin/categories/${encodeURIComponent(slug)}/content`} className="hover:underline">
+        <Link
+          href={`/admin/categories/${encodeURIComponent(slug)}/content`}
+          className="min-w-0 break-words font-medium text-primary hover:underline"
+        >
           {top.displayName}
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">{sub.subDisplayName}</span>
+        <span className="min-w-0 break-words text-foreground">{sub.subDisplayName}</span>
         <span className="mx-2">/</span>
         <span className="text-foreground">Page text</span>
       </nav>

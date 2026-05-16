@@ -30,7 +30,7 @@ export function InspirationGalleryMarketingEditor({ initial }: { initial: Inspir
   );
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-8">
+    <div className="mx-auto min-w-0 w-full max-w-2xl space-y-6 px-3 py-6 sm:px-4 md:p-8">
       <div>
         <h1 className="font-heading text-2xl font-semibold">Public page: /inspiration-gallery</h1>
         <p className="mt-2 text-sm text-muted-foreground">
